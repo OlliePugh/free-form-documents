@@ -1,41 +1,53 @@
-# 📝 OneNote Clone - Collaborative Note-Taking App
+# OneNote-like Collaborative Application
 
-A full-stack collaborative note-taking application similar to Microsoft OneNote, built with React, Node.js, SQLite, and Yjs for real-time collaboration.
+A full-stack collaborative note-taking application built with React, Node.js, TypeScript, and Yjs for real-time synchronization.
 
-## ✨ Features
+## 🚀 Features
 
-- **📚 Hierarchical Organization**: Notebooks → Sections → Pages
-- **🎨 Rich Content**: Text and image components with absolute positioning
-- **🔄 Real-time Collaboration**: Multiple users can edit pages simultaneously using Yjs
-- **📱 Modern UI**: Clean, responsive interface built with React and Tailwind CSS
-- **🖱️ Drag & Drop**: Move and resize components on the canvas
-- **📸 Image Support**: Upload and display images stored in SQLite
-- **🌐 WebSocket Sync**: Real-time synchronization via Hocuspocus server
+- **Real-time Collaboration**: Multiple users can edit simultaneously using Yjs and Hocuspocus v3.2.2
+- **Hierarchical Structure**: Notebooks → Sections → Pages → Components
+- **Movable Components**: Drag, resize, and position text, image, and drawing components with absolute positioning
+- **Image Upload**: Upload and display images with binary storage in SQLite
+- **Type-safe**: Full TypeScript implementation with strict typing
+- **Modern Stack**: React 18, Node.js with Express, Prisma ORM, and SQLite
 
-## 🏗️ Architecture
+## 🛠 Tech Stack
 
 ### Backend
-- **Node.js + TypeScript**: RESTful API server
-- **SQLite**: Local database with Prisma ORM
-- **Hocuspocus**: WebSocket server for Yjs collaboration
-- **Express**: Web framework with CORS and file upload support
+- **Language**: Node.js with TypeScript
+- **Framework**: Express.js
+- **Database**: SQLite with Prisma ORM
+- **Real-time**: Hocuspocus v3.2.2 WebSocket server
+- **File Upload**: Multer for image processing
 
-### Frontend
-- **React + TypeScript**: Modern UI with hooks and context
-- **Yjs**: Conflict-free replicated data types for collaboration
-- **Tailwind CSS**: Utility-first styling
-- **React Router**: Client-side routing
-- **React Draggable/Resizable**: Interactive components
+### Frontend  
+- **Framework**: React 18 with TypeScript
+- **Routing**: React Router DOM
+- **Styling**: Tailwind CSS
+- **Real-time**: Hocuspocus Provider v3.2.2 with Yjs
+- **UI Components**: React Draggable, React Resizable
 
-### Database Schema
-```sql
-Notebooks (id, title, color, timestamps)
-  ↓
-Sections (id, title, notebookId, timestamps)
-  ↓  
-Pages (id, title, sectionId, timestamps)
-  ↓
-PageComponents (id, pageId, type, x, y, width, height, zIndex, text?, imageData?, shapeData?, timestamps)
+## 📁 Project Structure
+
+```
+project/
+├── server/                 # Backend API and Hocuspocus server
+│   ├── src/
+│   │   ├── routes/        # Express API routes
+│   │   ├── realtime/      # Hocuspocus WebSocket server
+│   │   ├── db.ts          # Database connection
+│   │   ├── index.ts       # Main server entry point
+│   │   └── seed.ts        # Database seeding
+│   ├── prisma/            # Database schema and migrations
+│   └── package.json
+└── client/                # React frontend
+    ├── src/
+    │   ├── components/    # React components
+    │   ├── hooks/         # Custom hooks (useCollaboration)
+    │   ├── api/          # API client functions
+    │   ├── types/        # TypeScript type definitions
+    │   └── App.tsx       # Main React component
+    └── package.json
 ```
 
 ## 🚀 Quick Start
@@ -44,300 +56,170 @@ PageComponents (id, pageId, type, x, y, width, height, zIndex, text?, imageData?
 - Node.js 18+ and npm
 - Git
 
-### 1. Clone Repository & Setup Git
+### 1. Clone and Setup
 ```bash
 git clone <repository-url>
-cd onenote-clone
-
-# Initialize git if cloning manually
-git init
-git add .
-git commit -m "Initial commit"
+cd project
 ```
 
-### 2. Setup Backend
+### 2. Backend Setup
 ```bash
 cd server
-
-# Install dependencies
 npm install
-
-# Generate Prisma client
-npm run db:generate
-
-# Run database migrations (creates SQLite database)
-npx prisma migrate dev --name init
-
-# Seed database with sample data
-npm run db:seed
-
-# Start development server (API on :3000, Hocuspocus on :3001)
-npm run dev
+npm run db:generate     # Generate Prisma client
+npm run db:migrate      # Run database migrations  
+npm run db:seed         # Populate with sample data
+npm run dev             # Start development server
 ```
 
-### 3. Setup Frontend
+The backend will start on:
+- **HTTP API**: http://localhost:3000
+- **WebSocket**: ws://localhost:3001
+
+### 3. Frontend Setup (New Terminal)
 ```bash
-# Open new terminal
 cd client
-
-# Install dependencies
 npm install
-
-# Start development server (on :5173)
-npm run dev
+npm run dev             # Start React development server
 ```
 
-### 4. Access Application
-- **Frontend**: http://localhost:5173
-- **API**: http://localhost:3000
-- **Database**: SQLite file at `server/dev.db`
+The frontend will be available at: http://localhost:5173
 
-## 📖 Usage Guide
+## 🎯 Usage
 
-### Creating Content
-1. **Notebooks**: Create and organize your note collections
-2. **Sections**: Add sections within notebooks to categorize content
-3. **Pages**: Create pages within sections for actual content
-4. **Components**: Add text and image components to pages
+1. **Browse Notebooks**: View all notebooks on the homepage
+2. **Navigate Structure**: Click through Notebooks → Sections → Pages
+3. **Edit Pages**: 
+   - Add text components with the "Add Text" button
+   - Upload images with the "Add Image" button  
+   - Drag and resize components freely
+   - See real-time changes from other users
+4. **Collaborate**: Open the same page in multiple browser tabs to see real-time collaboration
 
-### Collaborative Editing
-1. Open the same page in multiple browser tabs/windows
-2. Changes are synchronized in real-time across all clients
-3. Connection status shown in top-right corner
-4. Conflict resolution handled automatically by Yjs
+## 🔧 API Endpoints
 
-### Component Interaction
-- **Select**: Click to select a component
-- **Move**: Drag to reposition
-- **Resize**: Drag the resize handle in bottom-right corner
-- **Edit Text**: Double-click text components to edit
-- **Delete**: Click the X button on selected components
-- **Images**: Use toolbar to upload images
-
-## 🛠️ Development
-
-### Project Structure
-```
-/
-├── server/               # Backend application
-│   ├── src/
-│   │   ├── routes/      # API endpoints
-│   │   ├── realtime/    # Hocuspocus server
-│   │   ├── db.ts        # Database connection
-│   │   └── index.ts     # Main server file
-│   ├── prisma/          # Database schema & migrations
-│   ├── dev.db          # SQLite database (created after migration)
-│   ├── .gitignore      # Server-specific git ignore
-│   └── package.json
-├── client/              # Frontend application
-│   ├── src/
-│   │   ├── components/  # React components
-│   │   ├── hooks/       # Custom hooks (Yjs)
-│   │   ├── api/         # API client
-│   │   └── types/       # TypeScript types
-│   ├── .gitignore      # Client-specific git ignore
-│   └── package.json
-├── .gitignore          # Root git ignore
-└── README.md
-```
-
-### Git Ignore Setup
-The project includes comprehensive `.gitignore` files:
-- **Root**: General exclusions (node_modules, OS files, IDE files)
-- **Server**: Backend-specific (build output, database files, .env)
-- **Client**: Frontend-specific (build output, Vite cache)
-
-**Important**: `node_modules/` directories are properly excluded from version control.
-
-### API Endpoints
+### Core Entities
 - `GET /api/notebooks` - List all notebooks
-- `POST /api/notebooks` - Create notebook
-- `GET /api/sections/notebook/:id` - Get sections for notebook
-- `POST /api/sections` - Create section
-- `GET /api/pages/section/:id` - Get pages for section
-- `POST /api/pages` - Create page
-- `GET /api/components/page/:id` - Get components for page
-- `POST /api/components` - Create component
-- `POST /api/components/upload-image` - Upload image
-- `GET /api/components/image/:id` - Serve image
+- `GET /api/notebooks/:id` - Get notebook with sections and pages
+- `GET /api/sections/:id` - Get section with pages
+- `GET /api/pages/:id` - Get page with components
+- `GET /api/components/page/:pageId` - Get all components for a page
+
+### Component Operations
+- `POST /api/components` - Create new component
+- `PUT /api/components/:id` - Update component
+- `DELETE /api/components/:id` - Delete component
+- `POST /api/components/upload-image` - Upload image component
+- `GET /api/components/image/:id` - Serve image binary data
+
+### System
 - `GET /health` - Health check endpoint
 
-### Environment Variables
-Create `.env` files for configuration:
+## 🔄 Real-time Collaboration
 
-**server/.env**
-```env
-DATABASE_URL="file:./dev.db"
-PORT=3000
-HOCUSPOCUS_PORT=3001
-```
+### How it Works
+- **Yjs Documents**: Each page is a Yjs document with CRDT (Conflict-free Replicated Data Type)
+- **Hocuspocus Server**: WebSocket backend that synchronizes Yjs documents across clients
+- **Component Sync**: Position, content, and lifecycle changes sync automatically
+- **Database Persistence**: Changes are debounced and stored in SQLite via Prisma
 
-**client/.env** (optional)
-```env
-VITE_API_URL=http://localhost:3000
-VITE_HOCUSPOCUS_URL=ws://localhost:3001
-```
+### Collaboration Features
+- **Live Cursors**: See where other users are editing
+- **Real-time Updates**: Instant synchronization of text, position, and component changes
+- **Conflict Resolution**: Yjs automatically merges conflicting changes
+- **Offline Support**: Changes sync when reconnected
 
-## ✅ Current Status
+## 🗄 Database Schema
 
-The application has been successfully built with:
+### Core Models
+- **Notebook**: `{ id, title, color, sections[] }`
+- **Section**: `{ id, title, notebookId, pages[] }`  
+- **Page**: `{ id, title, sectionId, components[] }`
+- **PageComponent**: `{ id, pageId, type, x, y, width, height, zIndex, text?, imageData?, shapeData? }`
 
-### ✅ Completed Features
-- [x] Complete backend API with all CRUD operations
-- [x] SQLite database with Prisma ORM
-- [x] **FIXED**: Real-time collaboration with Yjs and Hocuspocus
-- [x] React frontend with drag & drop components
-- [x] Image upload and storage in database
-- [x] Hierarchical organization (Notebooks → Sections → Pages)
-- [x] Responsive UI with Tailwind CSS
-- [x] TypeScript throughout the stack
-- [x] Proper Git ignore configuration
-- [x] **FIXED**: Component loading when opening pages
-- [x] **FIXED**: Proper zIndex management (0, 1, 2... instead of timestamps)
+### Component Types
+- **TEXT**: Editable text with Y.Text synchronization
+- **IMAGE**: Uploaded images stored as binary data
+- **DRAWING**: Vector shapes (basic implementation)
 
-### 📂 Sample Data Included
-The seeded database includes:
-- 2 sample notebooks ("Personal Notes", "Work Projects")
-- 3 sections across the notebooks
-- 3 sample pages with content
-- 4 text components with example content
+## 🔄 Recent Updates (v3.2.2)
 
-### 🔧 Recent Fixes Applied
-1. **Hocuspocus Server Setup**: Fixed the server configuration to use `Server.configure()` instead of `new Server()`
-2. **Component Loading**: Improved the `onLoadDocument` hook to properly load existing components when a page is opened
-3. **zIndex Management**: Replaced timestamp-based zIndex with proper sequential integers (0, 1, 2...)
-4. **Database Synchronization**: Enhanced bidirectional sync between Yjs and SQLite database
-5. **Error Handling**: Added comprehensive logging and error handling for debugging
-6. **Package Scripts**: Fixed npm scripts to use correct commands (`tsx` instead of `bun`)
+### Hocuspocus v3.2.2 Upgrade
+- ✅ **Updated Dependencies**: Upgraded from Hocuspocus v2.8.0 to v3.2.2
+- ✅ **API Migration**: Changed from `Server.configure()` to `new Server()` constructor
+- ✅ **Enhanced Performance**: Latest Hocuspocus improvements and bug fixes
+- ✅ **Better Type Safety**: Improved TypeScript definitions
 
-### 🚧 Known Limitations
-- Drawing components are UI placeholders (not yet implemented)
-- Real-time collaboration requires both clients to be connected
-- SQLite is single-user (for production, switch to PostgreSQL)
-
-## 🔧 Production Deployment
-
-### Backend
-```bash
-cd server
-npm run build
-npm start
-```
-
-### Frontend
-```bash
-cd client
-npm run build
-# Serve dist/ folder with your web server
-```
-
-### Database
-For production, switch back to PostgreSQL:
-1. Update `server/prisma/schema.prisma` datasource to `postgresql`
-2. Update DATABASE_URL to PostgreSQL connection string
-3. Run migrations: `npx prisma migrate deploy`
+### Previous Major Fixes Applied
+- ✅ **Fixed Component Loading**: Components now load properly when opening pages (resolved "no components loaded" error)
+- ✅ **Fixed zIndex Management**: Replaced timestamp-based zIndex with sequential integers (0, 1, 2...)
+- ✅ **Added zIndex Utilities**: `bringToFront()` and `sendToBack()` functions for layering control
+- ✅ **Improved Database Sync**: Better handling of component deletions and JSON parsing
+- ✅ **Enhanced Error Handling**: Robust error handling for shape data parsing and document sync
+- ✅ **Fixed Git Ignore**: Properly excluded `node_modules` from version control
 
 ## 🐛 Troubleshooting
 
-### Common Issues
-
-**Backend Won't Start**
+### Hocuspocus Connection Issues
 ```bash
-# Check if ports are available
-lsof -i :3000
-lsof -i :3001
+# Check if Hocuspocus server is running
+curl http://localhost:3000/health
 
-# Check database
-ls -la server/dev.db
+# Check WebSocket connection
+# In browser DevTools: new WebSocket('ws://localhost:3001')
 ```
 
-**Frontend Build Issues**
+### Components Not Loading
 ```bash
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
+# Verify components exist in database
+curl -s "http://localhost:3000/api/components/page/{PAGE_ID}"
+
+# Check Hocuspocus logs for sync events
+# Look for "📄 Loading document" and "📦 Loaded X components" messages
 ```
 
-**Database Issues**
+### Development Issues
 ```bash
 # Reset database
-rm server/dev.db
 cd server
-npx prisma migrate dev --name init
+rm prisma/dev.db
+npm run db:migrate
 npm run db:seed
+
+# Clear browser cache and restart servers
 ```
 
-**Hocuspocus Connection Issues**
-```bash
-# Check WebSocket connection
-curl -I http://localhost:3001
-
-# Check server logs for Hocuspocus startup messages
-# Should see: "Hocuspocus v2.x.x running at ws://0.0.0.0:3001"
-```
-
-**Components Not Loading**
-- Ensure the Hocuspocus server is running on port 3001
-- Check browser console for WebSocket connection errors
-- Verify page ID exists in database: `GET /api/components/page/{pageId}`
-- Check server logs for "Loading document" and "Found X components" messages
-
-**Git Issues**
-```bash
-# Check git status
-git status
-
-# If you see node_modules in git status, ensure .gitignore is working:
-git rm -r --cached node_modules
-git commit -m "Remove node_modules from tracking"
-```
-
-## 🎯 Future Enhancements
-
-- [ ] Drawing/sketch components with SVG
-- [ ] Rich text formatting (bold, italic, lists)
-- [ ] Page templates and themes
-- [ ] User authentication and permissions
-- [ ] Export to PDF/Word
-- [ ] Mobile app with React Native
-- [ ] Advanced search and tagging
-- [ ] Version history and undo/redo
-- [ ] Comments and annotations
-- [ ] Offline support with sync
-
----
-
-Built with ❤️ using React, Node.js, SQLite, and Yjs
-
-## 🔍 Architecture Decisions
-
-### Why SQLite for Development?
-- Zero configuration setup
-- No external dependencies
-- Perfect for demonstration and development
-- Easy to reset and seed with sample data
-
-### Why Yjs for Real-time Collaboration?
-- Conflict-free replicated data types (CRDT)
-- Handles network partitions gracefully
-- Works offline with automatic sync when reconnected
-- Battle-tested in production applications
+## 📚 Key Technologies
 
 ### Why Hocuspocus?
-- Built specifically for Yjs WebSocket connections
-- Provides hooks for database persistence
-- Handles connection management and scaling
-- Comprehensive logging and debugging features
+- **Built for Collaboration**: Designed specifically for real-time collaborative applications
+- **Yjs Integration**: Native support for Yjs CRDT technology
+- **WebSocket Optimized**: Efficient binary protocol for minimal bandwidth usage
+- **Extensible**: Plugin architecture for custom functionality
+- **Battle-tested**: Used in production by Tiptap and other collaborative editors
 
-### Component Architecture
-- Absolute positioning for OneNote-like experience
-- React Draggable/Resizable for smooth interactions
-- Yjs integration for real-time position sync
-- Optimistic updates with conflict resolution
-- Sequential zIndex management for proper layering
+### Component Architecture  
+- **Absolute Positioning**: Components use x, y coordinates for flexible layouts
+- **Sequential zIndex**: Clean layering system (0, 1, 2...) instead of timestamps
+- **Yjs Integration**: Each component is a Y.Map with reactive properties
+- **Real-time Sync**: Position, size, and content changes sync across all clients
+- **Database Persistence**: Debounced writes ensure data durability
 
-### Git Best Practices
-- Comprehensive `.gitignore` setup prevents committing dependencies
-- Separate ignore files for different project areas
-- Environment files excluded to protect sensitive data
-- Build artifacts and cache files properly excluded
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Yjs** - Conflict-free Replicated Data Types
+- **Hocuspocus** - Collaborative editing backend
+- **Tiptap Team** - Real-time collaboration infrastructure
+- **Prisma** - Next-generation ORM for TypeScript

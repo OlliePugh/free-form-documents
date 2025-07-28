@@ -3,10 +3,10 @@ import * as Y from "yjs";
 import { prisma } from "../db";
 
 export class HocuspocusServer {
-  private server: any;
+  private server: Server;
 
   constructor(port: number) {
-    this.server = Server.configure({
+    this.server = new Server({
       port,
       name: "OneNote Collaboration Server",
 
