@@ -80,3 +80,41 @@ body {
   height: 6px;
   cursor: se-resize;
 }
+
+/* Custom component styles */
+.component-container {
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.component-container.selected {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.component-container.dragging {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+  z-index: 1000 !important;
+}
+
+.drag-handle {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.component-container:hover .drag-handle {
+  opacity: 0.8 !important;
+}
+
+.component-container.dragging .drag-handle {
+  opacity: 1 !important;
+}
+
+/* Improve resize handle visibility */
+.react-resizable-handle {
+  background-color: #3b82f6;
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.react-resizable-handle:hover {
+  opacity: 1;
+}

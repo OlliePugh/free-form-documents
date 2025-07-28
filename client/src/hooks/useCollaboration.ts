@@ -98,6 +98,7 @@ export function useCollaboration(pageId: string) {
 
       setComponents((prevComponents) => {
         const newComponents = new Map(prevComponents);
+        let changeCount = 0;
 
         yComponents.forEach((yComponent: unknown, componentId: string) => {
           if (yComponent instanceof Y.Map) {
@@ -116,11 +117,26 @@ export function useCollaboration(pageId: string) {
 
             const existingComponent = newComponents.get(componentId);
             if (existingComponent) {
-              console.log(
-                `🔄 Updating existing component ${componentId} from Yjs`
-              );
+              // Check if position actually changed
+              const positionChanged = 
+                existingComponent.x !== component.x || 
+                existingComponent.y !== component.y ||
+                existingComponent.width !== component.width ||
+                existingComponent.height !== component.height;
+              
+              if (positionChanged) {
+                console.log(
+                  `🔄 Position update for component ${componentId}:`,
+                  `x: ${existingComponent.x} → ${component.x}`,
+                  `y: ${existingComponent.y} → ${component.y}`
+                );
+                changeCount++;
+              } else {
+                console.log(`🔄 Updating existing component ${componentId} from Yjs`);
+              }
             } else {
               console.log(`➕ Adding new component ${componentId} from Yjs`);
+              changeCount++;
             }
 
             newComponents.set(componentId, component);
@@ -135,10 +151,11 @@ export function useCollaboration(pageId: string) {
               `🗑️ Removing component ${componentId} from React state`
             );
             newComponents.delete(componentId);
+            changeCount++;
           }
         }
 
-        console.log(`📦 React state updated: ${newComponents.size} components`);
+        console.log(`📦 React state updated: ${newComponents.size} components, ${changeCount} changes`);
         return newComponents;
       });
     };
@@ -219,7 +236,63 @@ export function useCollaboration(pageId: string) {
   ) => {
     console.log("🔄 Updating component:", componentId, updates);
 
-    // Update React state optimistically first
+    if (!yComponentsRef.current) {
+      console.log("❌ No yComponentsRef.current");
+      return;
+    }
+
+    const yComponent = yComponentsRef.current.get(componentId);
+    if (!yComponent || !(yComponent instanceof Y.Map)) {
+      console.log("❌ Component not found or not a Y.Map:", componentId);
+      return;
+    }
+
+    console.log("🔄 Starting Yjs transaction for component:", componentId);
+    
+    // Update Yjs document first for real-time sync
+    doc.transact(() => {
+      if (updates.x !== undefined) {
+        console.log("📍 Setting x to:", updates.x);
+        yComponent.set("x", updates.x);
+      }
+      if (updates.y !== undefined) {
+        console.log("📍 Setting y to:", updates.y);
+        yComponent.set("y", updates.y);
+      }
+      if (updates.width !== undefined) {
+        console.log("📏 Setting width to:", updates.width);
+        yComponent.set("width", updates.width);
+      }
+      if (updates.height !== undefined) {
+        console.log("📏 Setting height to:", updates.height);
+        yComponent.set("height", updates.height);
+      }
+      if (updates.zIndex !== undefined) {
+        console.log("🔝 Setting zIndex to:", updates.zIndex);
+        yComponent.set("zIndex", updates.zIndex);
+      }
+      if (updates.shapeData !== undefined) {
+        console.log("🎨 Setting shapeData to:", updates.shapeData);
+        yComponent.set("shapeData", updates.shapeData);
+      }
+
+      if (updates.text !== undefined) {
+        const existingText = yComponent.get("text");
+        if (existingText instanceof Y.Text) {
+          // Update existing Y.Text
+          existingText.delete(0, existingText.length);
+          existingText.insert(0, updates.text);
+        } else {
+          // Create new Y.Text
+          const yText = new Y.Text(updates.text);
+          yComponent.set("text", yText);
+        }
+      }
+    });
+
+    console.log("✅ Yjs transaction completed for component:", componentId);
+
+    // Update React state optimistically after Yjs update to ensure consistency
     setComponents((prevComponents) => {
       const newComponents = new Map(prevComponents);
       const existingComponent = newComponents.get(componentId);
@@ -236,55 +309,10 @@ export function useCollaboration(pageId: string) {
           }),
         };
         newComponents.set(componentId, updatedComponent);
-        console.log("⚡ Optimistically updated React state for:", componentId);
+        console.log("⚡ Updated React state for component:", componentId);
       }
       return newComponents;
     });
-
-    if (!yComponentsRef.current) {
-      console.log("❌ No yComponentsRef.current");
-      return;
-    }
-
-    const yComponent = yComponentsRef.current.get(componentId);
-    if (!yComponent || !(yComponent instanceof Y.Map)) {
-      console.log("❌ Component not found or not a Y.Map:", componentId);
-      return;
-    }
-
-    console.log("🔄 Starting Yjs transaction");
-    doc.transact(() => {
-      if (updates.x !== undefined) {
-        console.log("📍 Setting x to:", updates.x);
-        yComponent.set("x", updates.x);
-      }
-      if (updates.y !== undefined) {
-        console.log("📍 Setting y to:", updates.y);
-        yComponent.set("y", updates.y);
-      }
-      if (updates.width !== undefined) yComponent.set("width", updates.width);
-      if (updates.height !== undefined)
-        yComponent.set("height", updates.height);
-      if (updates.zIndex !== undefined)
-        yComponent.set("zIndex", updates.zIndex);
-      if (updates.shapeData !== undefined)
-        yComponent.set("shapeData", updates.shapeData);
-
-      if (updates.text !== undefined) {
-        const existingText = yComponent.get("text");
-        if (existingText instanceof Y.Text) {
-          // Update existing Y.Text
-          existingText.delete(0, existingText.length);
-          existingText.insert(0, updates.text);
-        } else {
-          // Create new Y.Text
-          const yText = new Y.Text(updates.text);
-          yComponent.set("text", yText);
-        }
-      }
-      console.log("🔄 Yjs transaction completed");
-    });
-    console.log("✅ Component update completed");
   };
 
   const deleteComponent = (componentId: string) => {

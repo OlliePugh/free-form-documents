@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Draggable from 'react-draggable';
 import { ResizableBox } from 'react-resizable';
 import { X } from 'lucide-react';
@@ -16,6 +16,18 @@ interface PageComponentProps {
   getComponentText: () => Y.Text | null;
 }
 
+// Throttle function to limit update frequency
+const throttle = (func: Function, limit: number) => {
+  let inThrottle: boolean;
+  return function (this: any, ...args: any[]) {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+};
+
 export function PageComponent({
   component,
   isSelected,
@@ -26,8 +38,20 @@ export function PageComponent({
 }: PageComponentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingText, setEditingText] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const componentRef = useRef<HTMLDivElement>(null);
+  const lastUpdateRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Throttled update function for drag events (update every 50ms max)
+  const throttledUpdate = useCallback(
+    throttle((x: number, y: number) => {
+      console.log("🔄 Throttled update:", { componentId: component.id, x, y });
+      onUpdate({ x, y });
+      lastUpdateRef.current = { x, y };
+    }, 50),
+    [component.id, onUpdate]
+  );
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -53,13 +77,32 @@ export function PageComponent({
     }
   }, [component.id, getComponentText]);
 
+  const handleDragStart = () => {
+    console.log("🖱️ Drag start on component:", component.id);
+    setIsDragging(true);
+  };
+
   const handleDrag = (e: any, data: { x: number; y: number }) => {
-    console.log("🖱️ Drag event triggered:", { x: data.x, y: data.y });
-    // Update optimistically - this will update the React state immediately
-    onUpdate({ x: data.x, y: data.y });
+    console.log("🖱️ Drag event:", { componentId: component.id, x: data.x, y: data.y });
+    // Use throttled update during drag to avoid overwhelming WebSocket
+    throttledUpdate(data.x, data.y);
+  };
+
+  const handleDragStop = (e: any, data: { x: number; y: number }) => {
+    console.log("🖱️ Drag stop on component:", component.id, { x: data.x, y: data.y });
+    setIsDragging(false);
+    
+    // Final update to ensure exact position is set (not throttled)
+    if (!lastUpdateRef.current || 
+        lastUpdateRef.current.x !== data.x || 
+        lastUpdateRef.current.y !== data.y) {
+      console.log("🎯 Final position update:", { componentId: component.id, x: data.x, y: data.y });
+      onUpdate({ x: data.x, y: data.y });
+    }
   };
 
   const handleResize = (e: any, data: { size: { width: number; height: number } }) => {
+    console.log("🔄 Resize event triggered:", { componentId: component.id, width: data.size.width, height: data.size.height });
     onUpdate({ width: data.size.width, height: data.size.height });
   };
 
@@ -162,16 +205,16 @@ export function PageComponent({
   return (
     <Draggable
       position={{ x: component.x, y: component.y }}
+      onStart={handleDragStart}
       onDrag={handleDrag}
-      onStart={() => console.log("🖱️ Drag start on component:", component.id)}
-      onStop={() => console.log("🖱️ Drag stop on component:", component.id)}
+      onStop={handleDragStop}
       handle=".drag-handle"
       disabled={isEditing}
       nodeRef={componentRef}
     >
       <div
         ref={componentRef}
-        className={`component-container absolute ${isSelected ? 'selected' : ''}`}
+        className={`component-container absolute ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
         style={{ zIndex: component.zIndex }}
         onClick={handleClick}
       >
