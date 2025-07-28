@@ -129,7 +129,7 @@ export function NotebookView() {
 
       {/* Content */}
       <div className="flex-1 p-6">
-        {notebook.sections.length === 0 ? (
+        {notebook.sections?.length === 0 ? (
           <div className="text-center py-12">
             <FolderOpen className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No sections</h3>
@@ -137,18 +137,18 @@ export function NotebookView() {
           </div>
         ) : (
           <div className="space-y-8">
-            {notebook.sections.map((section) => (
+            {notebook.sections?.map((section) => (
               <div key={section.id} className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">{section.title}</h2>
                 
-                {section.pages.length === 0 ? (
+                {section.pages?.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <FileText className="mx-auto h-8 w-8 text-gray-400" />
                     <p className="mt-2 text-sm">No pages in this section</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {section.pages.map((page) => (
+                    {section.pages?.map((page) => (
                       <Link
                         key={page.id}
                         to={`/page/${page.id}`}
@@ -161,7 +161,7 @@ export function NotebookView() {
                               {page.title}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {page.components.length} components
+                              {page.components?.length || 0} components
                             </p>
                           </div>
                         </div>
@@ -251,7 +251,7 @@ export function NotebookView() {
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     >
                       <option value="">Select a section</option>
-                      {notebook.sections.map((section) => (
+                      {notebook.sections?.map((section) => (
                         <option key={section.id} value={section.id}>
                           {section.title}
                         </option>

@@ -13,14 +13,22 @@ router.get('/', async (req, res) => {
           include: {
             sections: {
               include: {
-                pages: true
+                pages: {
+                  include: {
+                    components: true
+                  }
+                }
               }
             }
           }
         },
         sections: {
           include: {
-            pages: true
+            pages: {
+              include: {
+                components: true
+              }
+            }
           }
         }
       },
@@ -44,14 +52,22 @@ router.get('/:id', async (req, res) => {
           include: {
             sections: {
               include: {
-                pages: true
+                pages: {
+                  include: {
+                    components: true
+                  }
+                }
               }
             }
           }
         },
         sections: {
           include: {
-            pages: true
+            pages: {
+              include: {
+                components: true
+              }
+            }
           }
         }
       }

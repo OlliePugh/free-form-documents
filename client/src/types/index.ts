@@ -35,7 +35,8 @@ export interface Page {
   sectionId: string;
   createdAt: string;
   updatedAt: string;
-  components: PageComponent[];
+  components?: PageComponent[]; // Made optional as it might not always be included
+  section?: Section; // For when page is fetched individually
 }
 
 export interface PageComponent {
