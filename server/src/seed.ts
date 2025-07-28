@@ -1,9 +1,14 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from './db';
 
 async function main() {
   console.log('🌱 Starting database seed...');
+
+  // Clean existing data
+  await prisma.pageComponent.deleteMany();
+  await prisma.page.deleteMany();
+  await prisma.section.deleteMany();
+  await prisma.sectionGroup.deleteMany();
+  await prisma.notebook.deleteMany();
 
   // Create sample notebooks
   const notebook1 = await prisma.notebook.create({
@@ -20,10 +25,10 @@ async function main() {
     }
   });
 
-  // Create sections for Personal Notes
+  // Create sections
   const section1 = await prisma.section.create({
     data: {
-      title: 'Ideas',
+      title: 'Quick Notes',
       notebookId: notebook1.id
     }
   });
@@ -31,51 +36,50 @@ async function main() {
   const section2 = await prisma.section.create({
     data: {
       title: 'Meeting Notes',
-      notebookId: notebook1.id
-    }
-  });
-
-  // Create sections for Work Projects
-  const section3 = await prisma.section.create({
-    data: {
-      title: 'OneNote Clone',
       notebookId: notebook2.id
     }
   });
 
-  // Create sample pages
+  const section3 = await prisma.section.create({
+    data: {
+      title: 'Ideas',
+      notebookId: notebook1.id
+    }
+  });
+
+  // Create pages
   const page1 = await prisma.page.create({
     data: {
-      title: 'App Ideas',
+      title: 'Welcome Page',
       sectionId: section1.id
     }
   });
 
   const page2 = await prisma.page.create({
     data: {
-      title: 'Daily Standup - Jan 15',
+      title: 'Project Planning',
       sectionId: section2.id
     }
   });
 
   const page3 = await prisma.page.create({
     data: {
-      title: 'Project Architecture',
-      sectionId: section3.id
+      title: 'Architecture Notes',
+      sectionId: section2.id
     }
   });
 
-  // Create sample components
+  // Create sample components with proper zIndex values
   await prisma.pageComponent.create({
     data: {
       pageId: page1.id,
       type: 'TEXT',
-      x: 100,
-      y: 100,
-      width: 300,
-      height: 80,
+      x: 50,
+      y: 50,
+      width: 400,
+      height: 100,
       zIndex: 0,
-      text: 'Build a collaborative note-taking app like OneNote'
+      text: 'Welcome to OneNote Clone!\n\nThis is a collaborative note-taking application built with React, Node.js, and Yjs for real-time collaboration.'
     }
   });
 
@@ -83,12 +87,12 @@ async function main() {
     data: {
       pageId: page1.id,
       type: 'TEXT',
-      x: 100,
+      x: 50,
       y: 200,
-      width: 250,
-      height: 60,
+      width: 350,
+      height: 80,
       zIndex: 1,
-      text: 'Features: Real-time sync, drag & drop, images'
+      text: 'Try adding new components using the toolbar above!\n\n• Add text components\n• Upload images\n• Collaborate in real-time'
     }
   });
 
@@ -96,12 +100,12 @@ async function main() {
     data: {
       pageId: page2.id,
       type: 'TEXT',
-      x: 50,
-      y: 50,
-      width: 400,
+      x: 100,
+      y: 100,
+      width: 300,
       height: 120,
       zIndex: 0,
-      text: 'Daily Standup Notes\n\n• Completed API routes\n• Working on frontend\n• Next: Implement Yjs integration'
+      text: 'Project Timeline\n\n□ Research phase\n□ Design mockups\n□ Development\n□ Testing\n□ Deployment'
     }
   });
 

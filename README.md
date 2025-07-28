@@ -185,13 +185,15 @@ The application has been successfully built with:
 ### ✅ Completed Features
 - [x] Complete backend API with all CRUD operations
 - [x] SQLite database with Prisma ORM
-- [x] Real-time collaboration with Yjs and Hocuspocus
+- [x] **FIXED**: Real-time collaboration with Yjs and Hocuspocus
 - [x] React frontend with drag & drop components
 - [x] Image upload and storage in database
 - [x] Hierarchical organization (Notebooks → Sections → Pages)
 - [x] Responsive UI with Tailwind CSS
 - [x] TypeScript throughout the stack
 - [x] Proper Git ignore configuration
+- [x] **FIXED**: Component loading when opening pages
+- [x] **FIXED**: Proper zIndex management (0, 1, 2... instead of timestamps)
 
 ### 📂 Sample Data Included
 The seeded database includes:
@@ -199,6 +201,14 @@ The seeded database includes:
 - 3 sections across the notebooks
 - 3 sample pages with content
 - 4 text components with example content
+
+### 🔧 Recent Fixes Applied
+1. **Hocuspocus Server Setup**: Fixed the server configuration to use `Server.configure()` instead of `new Server()`
+2. **Component Loading**: Improved the `onLoadDocument` hook to properly load existing components when a page is opened
+3. **zIndex Management**: Replaced timestamp-based zIndex with proper sequential integers (0, 1, 2...)
+4. **Database Synchronization**: Enhanced bidirectional sync between Yjs and SQLite database
+5. **Error Handling**: Added comprehensive logging and error handling for debugging
+6. **Package Scripts**: Fixed npm scripts to use correct commands (`tsx` instead of `bun`)
 
 ### 🚧 Known Limitations
 - Drawing components are UI placeholders (not yet implemented)
@@ -257,6 +267,21 @@ npx prisma migrate dev --name init
 npm run db:seed
 ```
 
+**Hocuspocus Connection Issues**
+```bash
+# Check WebSocket connection
+curl -I http://localhost:3001
+
+# Check server logs for Hocuspocus startup messages
+# Should see: "Hocuspocus v2.x.x running at ws://0.0.0.0:3001"
+```
+
+**Components Not Loading**
+- Ensure the Hocuspocus server is running on port 3001
+- Check browser console for WebSocket connection errors
+- Verify page ID exists in database: `GET /api/components/page/{pageId}`
+- Check server logs for "Loading document" and "Found X components" messages
+
 **Git Issues**
 ```bash
 # Check git status
@@ -298,11 +323,18 @@ Built with ❤️ using React, Node.js, SQLite, and Yjs
 - Works offline with automatic sync when reconnected
 - Battle-tested in production applications
 
+### Why Hocuspocus?
+- Built specifically for Yjs WebSocket connections
+- Provides hooks for database persistence
+- Handles connection management and scaling
+- Comprehensive logging and debugging features
+
 ### Component Architecture
 - Absolute positioning for OneNote-like experience
 - React Draggable/Resizable for smooth interactions
 - Yjs integration for real-time position sync
 - Optimistic updates with conflict resolution
+- Sequential zIndex management for proper layering
 
 ### Git Best Practices
 - Comprehensive `.gitignore` setup prevents committing dependencies

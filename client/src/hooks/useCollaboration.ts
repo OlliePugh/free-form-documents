@@ -26,7 +26,24 @@ export function useCollaboration(pageId: string) {
   const [isConnected, setIsConnected] = useState(false);
   const yComponentsRef = useRef<Y.Map<any> | null>(null);
 
+  // Helper function to get the next zIndex
+  const getNextZIndex = () => {
+    if (!yComponentsRef.current) return 0;
+    
+    let maxZIndex = -1;
+    yComponentsRef.current.forEach((yComponent) => {
+      if (yComponent instanceof Y.Map) {
+        const zIndex = yComponent.get('zIndex') || 0;
+        maxZIndex = Math.max(maxZIndex, zIndex);
+      }
+    });
+    
+    return maxZIndex + 1;
+  };
+
   useEffect(() => {
+    console.log(`🔗 Initializing collaboration for page: ${pageId}`);
+    
     // Create Hocuspocus provider
     const hocuspocusProvider = new HocuspocusProvider({
       url: HOCUSPOCUS_URL,
@@ -51,12 +68,21 @@ export function useCollaboration(pageId: string) {
       setIsConnected(false);
     };
 
+    // Listen for synced event (when initial data is loaded)
+    const handleSynced = () => {
+      console.log('📋 Initial document synced');
+      handleComponentsChange(); // Ensure we load components after sync
+    };
+
     hocuspocusProvider.on('connect', handleConnect);
     hocuspocusProvider.on('disconnect', handleDisconnect);
+    hocuspocusProvider.on('synced', handleSynced);
 
     // Listen for changes in the shared map
     const handleComponentsChange = () => {
       const newComponents = new Map<string, YjsComponent>();
+      
+      console.log(`📦 Loading ${yComponents.size} components from Yjs`);
       
       yComponents.forEach((yComponent: Y.Map<any>, componentId: string) => {
         if (yComponent instanceof Y.Map) {
@@ -67,7 +93,7 @@ export function useCollaboration(pageId: string) {
             y: yComponent.get('y'),
             width: yComponent.get('width'),
             height: yComponent.get('height'),
-            zIndex: yComponent.get('zIndex'),
+            zIndex: yComponent.get('zIndex') || 0,
             text: yComponent.get('text'),
             shapeData: yComponent.get('shapeData'),
             hasImage: yComponent.get('hasImage')
@@ -76,18 +102,20 @@ export function useCollaboration(pageId: string) {
         }
       });
       
+      console.log(`📦 Loaded ${newComponents.size} components into React state`);
       setComponents(newComponents);
     };
 
     yComponents.observe(handleComponentsChange);
     
-    // Initial load
+    // Initial load (in case components are already there)
     handleComponentsChange();
 
     return () => {
       yComponents.unobserve(handleComponentsChange);
       hocuspocusProvider.off('connect', handleConnect);
       hocuspocusProvider.off('disconnect', handleDisconnect);
+      hocuspocusProvider.off('synced', handleSynced);
       hocuspocusProvider.destroy();
     };
   }, [pageId, doc]);
@@ -110,13 +138,16 @@ export function useCollaboration(pageId: string) {
     const componentId = uuidv4();
     const yComponent = new Y.Map();
     
+    // Use provided zIndex or calculate the next one
+    const zIndex = options.zIndex !== undefined ? options.zIndex : getNextZIndex();
+    
     yComponent.set('id', componentId);
     yComponent.set('type', type);
     yComponent.set('x', x);
     yComponent.set('y', y);
     yComponent.set('width', width);
     yComponent.set('height', height);
-    yComponent.set('zIndex', options.zIndex || 0);
+    yComponent.set('zIndex', zIndex);
 
     if (options.text) {
       const yText = new Y.Text(options.text);
@@ -132,6 +163,7 @@ export function useCollaboration(pageId: string) {
     }
 
     yComponentsRef.current.set(componentId, yComponent);
+    console.log(`➕ Added component ${componentId} with zIndex ${zIndex}`);
     return componentId;
   };
 
@@ -178,11 +210,29 @@ export function useCollaboration(pageId: string) {
   const deleteComponent = (componentId: string) => {
     if (!yComponentsRef.current) return;
     yComponentsRef.current.delete(componentId);
+    console.log(`🗑️ Deleted component ${componentId}`);
   };
 
   const getComponentText = (componentId: string): Y.Text | null => {
     const component = components.get(componentId);
     return component?.text || null;
+  };
+
+  // Helper function to bring component to front
+  const bringToFront = (componentId: string) => {
+    const nextZIndex = getNextZIndex();
+    updateComponent(componentId, { zIndex: nextZIndex });
+  };
+
+  // Helper function to send component to back
+  const sendToBack = (componentId: string) => {
+    updateComponent(componentId, { zIndex: 0 });
+    
+    // Adjust other components' zIndex to make room
+    const otherComponents = Array.from(components.values()).filter(c => c.id !== componentId);
+    otherComponents.forEach((component, index) => {
+      updateComponent(component.id, { zIndex: index + 1 });
+    });
   };
 
   return {
@@ -192,6 +242,8 @@ export function useCollaboration(pageId: string) {
     updateComponent,
     deleteComponent,
     getComponentText,
+    bringToFront,
+    sendToBack,
     doc,
     provider
   };

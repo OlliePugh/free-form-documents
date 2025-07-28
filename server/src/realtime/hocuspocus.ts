@@ -6,7 +6,7 @@ export class HocuspocusServer {
   private server: Server;
 
   constructor(port: number) {
-    this.server = new Server({
+    this.server = Server.configure({
       port,
       name: 'OneNote Collaboration Server',
       
@@ -31,8 +31,10 @@ export class HocuspocusServer {
               orderBy: { zIndex: 'asc' }
             });
 
+            console.log(`Found ${components.length} components for page ${pageId}`);
+
             // Initialize Yjs document with existing components
-            const yDoc = new Y.Doc();
+            const yDoc = data.document;
             const yComponents = yDoc.getMap('components');
             
             components.forEach(component => {
@@ -51,7 +53,12 @@ export class HocuspocusServer {
               }
               
               if (component.shapeData) {
-                yComponent.set('shapeData', component.shapeData);
+                try {
+                  const parsedShapeData = JSON.parse(component.shapeData as string);
+                  yComponent.set('shapeData', parsedShapeData);
+                } catch (error) {
+                  console.error('Error parsing shape data:', error);
+                }
               }
               
               if (component.imageData) {
@@ -61,14 +68,15 @@ export class HocuspocusServer {
               yComponents.set(component.id, yComponent);
             });
 
-            return Y.encodeStateAsUpdate(yDoc);
+            console.log(`Loaded ${yComponents.size} components into Yjs document`);
+            return yDoc;
           } catch (error) {
             console.error('Error loading document:', error);
-            return new Uint8Array();
+            return data.document;
           }
         }
 
-        return new Uint8Array();
+        return data.document;
       },
 
       async onStoreDocument(data) {
@@ -79,12 +87,34 @@ export class HocuspocusServer {
           
           try {
             // Apply the document state and sync with database
-            const yDoc = new Y.Doc();
-            Y.applyUpdate(yDoc, data.document);
+            const yComponents = data.document.getMap('components');
             
-            const yComponents = yDoc.getMap('components');
+            // Get all component IDs from Yjs
+            const yjsComponentIds = new Set<string>();
+            yComponents.forEach((_, componentId) => {
+              yjsComponentIds.add(componentId);
+            });
+
+            // Get all component IDs from database
+            const dbComponents = await prisma.pageComponent.findMany({
+              where: { pageId },
+              select: { id: true }
+            });
+            const dbComponentIds = new Set(dbComponents.map(c => c.id));
+
+            // Delete components that exist in DB but not in Yjs (they were deleted)
+            const toDelete = Array.from(dbComponentIds).filter(id => !yjsComponentIds.has(id));
+            if (toDelete.length > 0) {
+              await prisma.pageComponent.deleteMany({
+                where: {
+                  id: { in: toDelete },
+                  pageId
+                }
+              });
+              console.log(`Deleted ${toDelete.length} components`);
+            }
             
-            // This is a simplified sync - in production you'd want more sophisticated conflict resolution
+            // Upsert components from Yjs to database
             for (const [componentId, yComponent] of yComponents.entries()) {
               if (yComponent instanceof Y.Map) {
                 const componentData = {
@@ -96,7 +126,7 @@ export class HocuspocusServer {
                   text: yComponent.get('text') instanceof Y.Text 
                     ? (yComponent.get('text') as Y.Text).toString() 
                     : undefined,
-                  shapeData: yComponent.get('shapeData') || undefined
+                  shapeData: yComponent.get('shapeData') ? JSON.stringify(yComponent.get('shapeData')) : undefined
                 };
 
                 await prisma.pageComponent.upsert({
@@ -105,7 +135,7 @@ export class HocuspocusServer {
                   create: {
                     id: componentId,
                     pageId,
-                    type: yComponent.get('type') as any,
+                    type: yComponent.get('type') as string,
                     ...componentData
                   }
                 });

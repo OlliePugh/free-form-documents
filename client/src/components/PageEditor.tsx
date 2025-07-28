@@ -9,34 +9,35 @@ import { Page } from '../types';
 export function PageEditor() {
   const { pageId } = useParams<{ pageId: string }>();
   const [page, setPage] = useState<Page | null>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    components,
-    isConnected,
-    addComponent,
-    updateComponent,
-    deleteComponent,
-    getComponentText
+  const { 
+    components, 
+    isConnected, 
+    addComponent, 
+    updateComponent, 
+    deleteComponent, 
+    getComponentText,
+    bringToFront,
+    sendToBack
   } = useCollaboration(pageId!);
 
   useEffect(() => {
-    if (pageId) {
-      loadPage();
-    }
+    loadPage();
   }, [pageId]);
 
   const loadPage = async () => {
+    if (!pageId) return;
+    
     try {
-      const data = await pagesApi.getById(pageId!);
-      setPage(data);
+      console.log(`📄 Loading page data for: ${pageId}`);
+      const pageData = await pagesApi.getById(pageId);
+      setPage(pageData);
+      console.log(`📄 Page loaded: ${pageData.title}`);
     } catch (error) {
-      console.error('Failed to load page:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error loading page:', error);
     }
   };
 
@@ -52,16 +53,14 @@ export function PageEditor() {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = 100;
     const y = 100;
-    const width = 200;
-    const height = 60;
-
-    const componentId = addComponent('TEXT', x, y, width, height, {
-      text: 'Click to edit text',
-      zIndex: Date.now()
+    
+    const componentId = addComponent('TEXT', x, y, 200, 100, {
+      text: 'Click to edit text...'
     });
-
+    
     if (componentId) {
       setSelectedComponentId(componentId);
+      console.log(`✨ Created text component: ${componentId}`);
     }
   };
 
@@ -74,41 +73,35 @@ export function PageEditor() {
     if (!file || !pageId) return;
 
     try {
-      const x = 100;
-      const y = 100;
-      const width = 200;
-      const height = 150;
+      console.log(`📸 Uploading image: ${file.name}`);
       
-      // Upload image to backend first
-      const uploadedComponent = await componentsApi.uploadImage(pageId, x, y, width, height, file, Date.now());
-      
-      // Add to Yjs with reference to uploaded image
-      const componentId = addComponent('IMAGE', x, y, width, height, {
-        hasImage: true,
-        zIndex: Date.now()
+      // Upload the image
+      const component = await componentsApi.uploadImage(file, {
+        pageId,
+        x: 150,
+        y: 150,
+        width: 200,
+        height: 150
+      });
+
+      // Add the component to Yjs with hasImage flag
+      const componentId = addComponent('IMAGE', component.x, component.y, component.width, component.height, {
+        hasImage: true
       });
 
       if (componentId) {
         setSelectedComponentId(componentId);
+        console.log(`✨ Created image component: ${componentId}`);
       }
     } catch (error) {
-      console.error('Failed to upload image:', error);
+      console.error('Error uploading image:', error);
     }
 
-    // Reset file input
+    // Reset the file input
     e.target.value = '';
   };
 
-  const handleComponentUpdate = (
-    componentId: string,
-    updates: {
-      x?: number;
-      y?: number;
-      width?: number;
-      height?: number;
-      text?: string;
-    }
-  ) => {
+  const handleComponentUpdate = (componentId: string, updates: any) => {
     updateComponent(componentId, updates);
   };
 
@@ -119,108 +112,110 @@ export function PageEditor() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const handleComponentSelect = (componentId: string) => {
+    setSelectedComponentId(componentId);
+    // Bring selected component to front for better visibility
+    bringToFront(componentId);
+  };
+
+  // Debug: Log components when they change
+  useEffect(() => {
+    console.log(`🔄 Components updated: ${components.size} total`, Array.from(components.keys()));
+  }, [components]);
 
   if (!page) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Page not found</h2>
-          <Link to="/" className="text-blue-600 hover:text-blue-500 mt-2 inline-block">
-            ← Back to notebooks
-          </Link>
-        </div>
+      <div className="h-full flex items-center justify-center">
+        <div className="text-gray-500">Loading page...</div>
       </div>
     );
   }
-
-  const componentArray = Array.from(components.values()).sort((a, b) => a.zIndex - b.zIndex);
 
   return (
     <div className="h-full flex flex-col bg-gray-100">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link
-              to={`/notebook/${page.section.notebook?.id || ''}`}
-              className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
+            <Link 
+              to={`/notebook/${page.section.notebookId}`}
+              className="text-gray-500 hover:text-gray-700"
             >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Back
+              <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">{page.title}</h1>
               <p className="text-sm text-gray-500">
-                {page.section.title} • {page.section.notebook?.title}
+                {page.section.notebook.title} → {page.section.title}
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              {isConnected ? (
-                <>
-                  <Wifi className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-green-600">Connected</span>
-                </>
-              ) : (
-                <>
-                  <WifiOff className="w-4 h-4 text-red-500" />
-                  <span className="text-sm text-red-600">Disconnected</span>
-                </>
-              )}
-            </div>
+          
+          {/* Connection Status */}
+          <div className="flex items-center space-x-2">
+            {isConnected ? (
+              <div className="flex items-center text-green-600">
+                <Wifi className="w-4 h-4 mr-1" />
+                <span className="text-sm">Connected</span>
+              </div>
+            ) : (
+              <div className="flex items-center text-red-600">
+                <WifiOff className="w-4 h-4 mr-1" />
+                <span className="text-sm">Disconnected</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex-shrink-0">
-        <div className="flex items-center space-x-4">
+      <div className="bg-white border-b border-gray-200 px-6 py-2">
+        <div className="flex items-center space-x-2">
           <button
             onClick={handleAddTextComponent}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="flex items-center px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             <Type className="w-4 h-4 mr-2" />
-            Text
+            Add Text
           </button>
           <button
             onClick={handleAddImageComponent}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="flex items-center px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600"
           >
             <Image className="w-4 h-4 mr-2" />
-            Image
+            Add Image
           </button>
           <button
-            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 opacity-50 cursor-not-allowed"
-            disabled
+            onClick={() => addComponent('DRAWING', 200, 200, 150, 150)}
+            className="flex items-center px-3 py-2 text-sm bg-purple-500 text-white rounded hover:bg-purple-600"
           >
             <Circle className="w-4 h-4 mr-2" />
-            Drawing (Coming Soon)
+            Add Drawing
           </button>
+          
+          {/* Debug info */}
+          <div className="ml-auto text-sm text-gray-500">
+            Components: {components.size} | Page: {pageId}
+          </div>
         </div>
       </div>
 
       {/* Canvas */}
       <div className="flex-1 overflow-auto">
-        <div
-          ref={canvasRef}
+        <div 
+          ref={canvasRef} 
           className="relative min-h-full bg-white"
-          style={{ minHeight: '800px', width: '100%' }}
           onClick={handleCanvasClick}
+          style={{ minWidth: '1200px', minHeight: '800px' }}
         >
-          {componentArray.map((component) => (
+          {Array.from(components.values())
+            .sort((a, b) => a.zIndex - b.zIndex)
+            .map((component) => (
             <PageComponent
               key={component.id}
               component={component}
               isSelected={selectedComponentId === component.id}
-              onSelect={() => setSelectedComponentId(component.id)}
+              onSelect={() => handleComponentSelect(component.id)}
               onUpdate={(updates) => handleComponentUpdate(component.id, updates)}
               onDelete={() => handleComponentDelete(component.id)}
               getComponentText={() => getComponentText(component.id)}
@@ -229,13 +224,12 @@ export function PageEditor() {
         </div>
       </div>
 
-      {/* Hidden file input for image uploads */}
-      <input
+      <input 
         ref={fileInputRef}
-        type="file"
-        accept="image/*"
+        type="file" 
+        accept="image/*" 
         onChange={handleImageUpload}
-        className="hidden"
+        className="hidden" 
       />
     </div>
   );

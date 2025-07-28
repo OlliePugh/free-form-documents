@@ -116,16 +116,16 @@ export const componentsApi = {
     return response.data;
   },
 
-  uploadImage: async (pageId: string, x: number, y: number, width: number, height: number, file: File, zIndex?: number): Promise<PageComponent> => {
+  uploadImage: async (file: File, options: { pageId: string; x: number; y: number; width: number; height: number; zIndex?: number }): Promise<PageComponent> => {
     const formData = new FormData();
     formData.append('image', file);
-    formData.append('pageId', pageId);
-    formData.append('x', x.toString());
-    formData.append('y', y.toString());
-    formData.append('width', width.toString());
-    formData.append('height', height.toString());
-    if (zIndex !== undefined) {
-      formData.append('zIndex', zIndex.toString());
+    formData.append('pageId', options.pageId);
+    formData.append('x', options.x.toString());
+    formData.append('y', options.y.toString());
+    formData.append('width', options.width.toString());
+    formData.append('height', options.height.toString());
+    if (options.zIndex !== undefined) {
+      formData.append('zIndex', options.zIndex.toString());
     }
 
     const response = await apiClient.post('/components/upload-image', formData, {
