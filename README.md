@@ -44,10 +44,15 @@ PageComponents (id, pageId, type, x, y, width, height, zIndex, text?, imageData?
 - Node.js 18+ and npm
 - Git
 
-### 1. Clone Repository
+### 1. Clone Repository & Setup Git
 ```bash
 git clone <repository-url>
 cd onenote-clone
+
+# Initialize git if cloning manually
+git init
+git add .
+git commit -m "Initial commit"
 ```
 
 ### 2. Setup Backend
@@ -122,6 +127,7 @@ npm run dev
 │   │   └── index.ts     # Main server file
 │   ├── prisma/          # Database schema & migrations
 │   ├── dev.db          # SQLite database (created after migration)
+│   ├── .gitignore      # Server-specific git ignore
 │   └── package.json
 ├── client/              # Frontend application
 │   ├── src/
@@ -129,9 +135,19 @@ npm run dev
 │   │   ├── hooks/       # Custom hooks (Yjs)
 │   │   ├── api/         # API client
 │   │   └── types/       # TypeScript types
+│   ├── .gitignore      # Client-specific git ignore
 │   └── package.json
+├── .gitignore          # Root git ignore
 └── README.md
 ```
+
+### Git Ignore Setup
+The project includes comprehensive `.gitignore` files:
+- **Root**: General exclusions (node_modules, OS files, IDE files)
+- **Server**: Backend-specific (build output, database files, .env)
+- **Client**: Frontend-specific (build output, Vite cache)
+
+**Important**: `node_modules/` directories are properly excluded from version control.
 
 ### API Endpoints
 - `GET /api/notebooks` - List all notebooks
@@ -175,6 +191,7 @@ The application has been successfully built with:
 - [x] Hierarchical organization (Notebooks → Sections → Pages)
 - [x] Responsive UI with Tailwind CSS
 - [x] TypeScript throughout the stack
+- [x] Proper Git ignore configuration
 
 ### 📂 Sample Data Included
 The seeded database includes:
@@ -240,6 +257,16 @@ npx prisma migrate dev --name init
 npm run db:seed
 ```
 
+**Git Issues**
+```bash
+# Check git status
+git status
+
+# If you see node_modules in git status, ensure .gitignore is working:
+git rm -r --cached node_modules
+git commit -m "Remove node_modules from tracking"
+```
+
 ## 🎯 Future Enhancements
 
 - [ ] Drawing/sketch components with SVG
@@ -276,3 +303,9 @@ Built with ❤️ using React, Node.js, SQLite, and Yjs
 - React Draggable/Resizable for smooth interactions
 - Yjs integration for real-time position sync
 - Optimistic updates with conflict resolution
+
+### Git Best Practices
+- Comprehensive `.gitignore` setup prevents committing dependencies
+- Separate ignore files for different project areas
+- Environment files excluded to protect sensitive data
+- Build artifacts and cache files properly excluded
