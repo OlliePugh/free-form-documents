@@ -41,11 +41,11 @@ export function PageComponent({
     const yText = getComponentText();
     if (yText) {
       setEditingText(yText.toString());
-      
+
       const handleTextChange = () => {
         setEditingText(yText.toString());
       };
-      
+
       yText.observe(handleTextChange);
       return () => yText.unobserve(handleTextChange);
     } else if (component.type === 'TEXT') {
@@ -54,6 +54,8 @@ export function PageComponent({
   }, [component.id, getComponentText]);
 
   const handleDrag = (e: any, data: { x: number; y: number }) => {
+    console.log("🖱️ Drag event triggered:", { x: data.x, y: data.y });
+    // Update optimistically - this will update the React state immediately
     onUpdate({ x: data.x, y: data.y });
   };
 
@@ -93,6 +95,7 @@ export function PageComponent({
   };
 
   const handleClick = (e: React.MouseEvent) => {
+    console.log("🖱️ Click event on component:", component.id);
     e.stopPropagation();
     onSelect();
   };
@@ -113,14 +116,14 @@ export function PageComponent({
               onChange={(e) => setEditingText(e.target.value)}
               onBlur={handleTextSubmit}
               onKeyDown={handleTextKeyDown}
-              className="w-full h-full resize-none border-none outline-none bg-transparent p-2 text-sm"
+              className="w-full h-full resize-none border-none outline-none bg-transparent p-2 text-sm text-gray-900"
               style={{ minHeight: '100%' }}
             />
           );
         }
         return (
           <div
-            className="w-full h-full p-2 text-sm whitespace-pre-wrap cursor-text"
+            className="w-full h-full p-2 text-sm whitespace-pre-wrap cursor-text text-gray-900"
             onDoubleClick={handleTextDoubleClick}
           >
             {editingText || 'Click to edit text'}
@@ -160,8 +163,11 @@ export function PageComponent({
     <Draggable
       position={{ x: component.x, y: component.y }}
       onDrag={handleDrag}
+      onStart={() => console.log("🖱️ Drag start on component:", component.id)}
+      onStop={() => console.log("🖱️ Drag stop on component:", component.id)}
       handle=".drag-handle"
       disabled={isEditing}
+      nodeRef={componentRef}
     >
       <div
         ref={componentRef}
@@ -175,24 +181,26 @@ export function PageComponent({
           onResize={handleResize}
           minConstraints={[50, 30]}
           resizeHandles={['se']}
-          disabled={isEditing}
         >
           <div className="w-full h-full bg-white border border-gray-200 rounded shadow-sm relative">
-            {/* Drag handle */}
-            <div className="drag-handle absolute inset-0 cursor-move" />
-            
+            {/* Drag handle - top border area */}
+            <div
+              className="drag-handle absolute top-0 left-0 right-0 h-3 cursor-move bg-blue-200 opacity-50 z-20"
+              onClick={() => console.log("🖱️ Drag handle clicked")}
+            />
+
             {/* Delete button */}
             {isSelected && !isEditing && (
               <button
                 onClick={handleDeleteClick}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 z-10"
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 z-30"
               >
                 <X className="w-3 h-3" />
               </button>
             )}
 
             {/* Content */}
-            <div className="w-full h-full relative">
+            <div className="w-full h-full relative pointer-events-auto">
               {renderContent()}
             </div>
           </div>
