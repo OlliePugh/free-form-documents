@@ -1,0 +1,334 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* OneNote-like custom styles */
+:root {
+  --onenote-purple: #7719AA;
+  --onenote-blue: #0078D4;
+  --onenote-light-blue: #106EBE;
+  --onenote-gray: #F3F2F1;
+  --onenote-text: #323130;
+  --onenote-text-secondary: #605E5C;
+  --onenote-border: #EDEBE9;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--onenote-gray);
+  color: var(--onenote-text);
+}
+
+/* Custom scrollbar for OneNote feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Rich text editor styling */
+.ProseMirror {
+  outline: none !important;
+  font-family: 'Calibri', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--onenote-text);
+}
+
+.ProseMirror p {
+  margin: 0.5em 0;
+}
+
+.ProseMirror h1 {
+  font-size: 1.8em;
+  font-weight: 600;
+  margin: 1em 0 0.5em 0;
+  color: var(--onenote-text);
+}
+
+.ProseMirror h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.8em 0 0.4em 0;
+  color: var(--onenote-text);
+}
+
+.ProseMirror h3 {
+  font-size: 1.3em;
+  font-weight: 600;
+  margin: 0.6em 0 0.3em 0;
+  color: var(--onenote-text);
+}
+
+.ProseMirror ul, .ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.ProseMirror li {
+  margin: 0.25em 0;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid var(--onenote-blue);
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+  color: var(--onenote-text-secondary);
+}
+
+.ProseMirror code {
+  background-color: #f4f4f4;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9em;
+}
+
+.ProseMirror pre {
+  background-color: #f8f8f8;
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--onenote-border);
+}
+
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Table styling */
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1em 0;
+  overflow: hidden;
+}
+
+.ProseMirror table td, .ProseMirror table th {
+  min-width: 1em;
+  border: 1px solid var(--onenote-border);
+  padding: 8px 12px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ProseMirror table th {
+  font-weight: 600;
+  text-align: left;
+  background-color: #f8f9fa;
+}
+
+.ProseMirror table .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(200, 200, 255, 0.4);
+  pointer-events: none;
+}
+
+/* Component styling */
+.component-container {
+  transition: transform 0.1s ease;
+}
+
+.component-container.dragging {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.component-container.selected {
+  z-index: 1000 !important;
+}
+
+/* Toolbar styling */
+.rich-text-editor .toolbar {
+  background: white;
+  border-bottom: 1px solid var(--onenote-border);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.rich-text-editor .toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.rich-text-editor .toolbar button:hover {
+  background-color: #f3f2f1;
+}
+
+.rich-text-editor .toolbar button.active {
+  background-color: #e1dfdd;
+  color: var(--onenote-blue);
+}
+
+/* Sidebar styling improvements */
+.sidebar-section {
+  transition: all 0.2s ease;
+}
+
+.sidebar-section:hover {
+  background-color: rgba(0, 120, 212, 0.05);
+}
+
+/* Modal improvements */
+.modal-overlay {
+  backdrop-filter: blur(4px);
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Focus states */
+.focus-ring:focus {
+  outline: 2px solid var(--onenote-blue);
+  outline-offset: 2px;
+}
+
+/* Grid pattern for page background */
+.grid-pattern {
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Subtle animations */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Improved button styles */
+.btn-primary {
+  background: linear-gradient(135deg, var(--onenote-blue) 0%, var(--onenote-light-blue) 100%);
+  border: none;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+/* Typography improvements */
+.text-heading-1 {
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--onenote-text);
+}
+
+.text-heading-2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--onenote-text);
+}
+
+.text-body {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--onenote-text);
+}
+
+.text-caption {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--onenote-text-secondary);
+}
+
+/* Status indicators */
+.status-connected {
+  color: #107C10;
+}
+
+.status-disconnected {
+  color: #D13438;
+}
+
+.status-saving {
+  color: #FF8C00;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .rich-text-editor .toolbar {
+    padding: 4px 8px;
+  }
+  
+  .rich-text-editor .toolbar button {
+    width: 28px;
+    height: 28px;
+  }
+}
