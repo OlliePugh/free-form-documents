@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Notebook {
+  id        String   @id @default(uuid())
+  title     String
+  color     String?  @default("#4F46E5")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sectionGroups SectionGroup[]
+  sections      Section[]
+
+  @@map("notebooks")
+}
+
+model SectionGroup {
+  id         String   @id @default(uuid())
+  title      String
+  notebookId String
+  parentId   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  notebook Notebook       @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  parent   SectionGroup?  @relation("SectionGroupHierarchy", fields: [parentId], references: [id])
+  children SectionGroup[] @relation("SectionGroupHierarchy")
+  sections Section[]
+
+  @@map("section_groups")
+}
+
+model Section {
+  id              String   @id @default(uuid())
+  title           String
+  notebookId      String
+  sectionGroupId  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  notebook     Notebook      @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  sectionGroup SectionGroup? @relation(fields: [sectionGroupId], references: [id], onDelete: Cascade)
+  pages        Page[]
+
+  @@map("sections")
+}
+
+model Page {
+  id        String   @id @default(uuid())
+  title     String
+  sectionId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  section    Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  components PageComponent[]
+
+  @@map("pages")
+}
+
+model PageComponent {
+  id      String @id @default(uuid())
+  pageId  String
+  type    String // TEXT, IMAGE, or DRAWING
+  x       Float
+  y       Float
+  width   Float
+  height  Float
+  zIndex  Int    @default(0)
+  
+  // Content fields - using TEXT for binary data in SQLite
+  text      String?
+  imageData Bytes?
+  shapeData String? // JSON as string for SQLite compatibility
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("page_components")
+}
