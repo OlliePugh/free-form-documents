@@ -118,12 +118,12 @@ export function useCollaboration(pageId: string) {
             const existingComponent = newComponents.get(componentId);
             if (existingComponent) {
               // Check if position actually changed
-              const positionChanged = 
-                existingComponent.x !== component.x || 
+              const positionChanged =
+                existingComponent.x !== component.x ||
                 existingComponent.y !== component.y ||
                 existingComponent.width !== component.width ||
                 existingComponent.height !== component.height;
-              
+
               if (positionChanged) {
                 console.log(
                   `🔄 Position update for component ${componentId}:`,
@@ -132,7 +132,9 @@ export function useCollaboration(pageId: string) {
                 );
                 changeCount++;
               } else {
-                console.log(`🔄 Updating existing component ${componentId} from Yjs`);
+                console.log(
+                  `🔄 Updating existing component ${componentId} from Yjs`
+                );
               }
             } else {
               console.log(`➕ Adding new component ${componentId} from Yjs`);
@@ -155,18 +157,94 @@ export function useCollaboration(pageId: string) {
           }
         }
 
-        console.log(`📦 React state updated: ${newComponents.size} components, ${changeCount} changes`);
+        console.log(
+          `📦 React state updated: ${newComponents.size} components, ${changeCount} changes`
+        );
         return newComponents;
       });
     };
 
+    // Keep track of component observers for cleanup
+    const componentObservers = new Map<string, () => void>();
+
+    // Observe the components map for additions/deletions
     yComponents.observe(handleComponentsChange);
+
+    // Observe individual components for property changes
+    const observeComponent = (yComponent: Y.Map<any>, componentId: string) => {
+      const observer = () => {
+        console.log(
+          `🔄 Individual component ${componentId} changed, triggering update`
+        );
+        handleComponentsChange();
+      };
+      yComponent.observe(observer);
+      componentObservers.set(componentId, observer);
+
+      // Also observe the text object if it exists
+      const textObserver = () => {
+        console.log(
+          `📝 Text content changed for component ${componentId}, triggering update`
+        );
+        handleComponentsChange();
+      };
+
+      const yText = yComponent.get("text");
+      if (yText instanceof Y.Text) {
+        console.log(`📝 Setting up text observer for component ${componentId}`);
+        yText.observe(textObserver);
+        componentObservers.set(`${componentId}-text`, textObserver);
+      }
+    };
+
+    // Set up observation for existing components
+    yComponents.forEach((yComponent: unknown, componentId: string) => {
+      if (yComponent instanceof Y.Map) {
+        observeComponent(yComponent, componentId);
+      }
+    });
+
+    // Observe for new components being added
+    yComponents.observe((event: any) => {
+      event.changes.added.forEach((change: any) => {
+        const yComponent = yComponents.get(change.key);
+        if (yComponent instanceof Y.Map) {
+          console.log(
+            `👀 Setting up observation for new component: ${change.key}`
+          );
+          observeComponent(yComponent, change.key);
+        }
+      });
+    });
 
     // Initial load (in case components are already there)
     handleComponentsChange();
 
     return () => {
       yComponents.unobserve(handleComponentsChange);
+
+      // Clean up individual component observers
+      componentObservers.forEach((observer, componentId) => {
+        if (componentId.endsWith("-text")) {
+          // This is a text observer, find the component and its text
+          const actualComponentId = componentId.replace("-text", "");
+          const yComponent = yComponents.get(actualComponentId);
+          if (yComponent instanceof Y.Map) {
+            const yText = yComponent.get("text");
+            if (yText instanceof Y.Text) {
+              yText.unobserve(observer);
+            }
+          }
+        } else {
+          // This is a component observer
+          const yComponent = yComponents.get(componentId);
+          if (yComponent instanceof Y.Map) {
+            yComponent.unobserve(observer);
+          }
+        }
+      });
+      componentObservers.clear();
+
       hocuspocusProvider.off("connect", handleConnect);
       hocuspocusProvider.off("disconnect", handleDisconnect);
       hocuspocusProvider.off("synced", handleSynced);
@@ -248,7 +326,7 @@ export function useCollaboration(pageId: string) {
     }
 
     console.log("🔄 Starting Yjs transaction for component:", componentId);
-    
+
     // Update Yjs document first for real-time sync
     doc.transact(() => {
       if (updates.x !== undefined) {

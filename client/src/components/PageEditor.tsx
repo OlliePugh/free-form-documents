@@ -13,12 +13,12 @@ export function PageEditor() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { 
-    components, 
-    isConnected, 
-    addComponent, 
-    updateComponent, 
-    deleteComponent, 
+  const {
+    components,
+    isConnected,
+    addComponent,
+    updateComponent,
+    deleteComponent,
     getComponentText,
     bringToFront,
     sendToBack
@@ -30,7 +30,7 @@ export function PageEditor() {
 
   const loadPage = async () => {
     if (!pageId) return;
-    
+
     try {
       console.log(`📄 Loading page data for: ${pageId}`);
       const pageData = await pagesApi.getById(pageId);
@@ -53,11 +53,11 @@ export function PageEditor() {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = 100;
     const y = 100;
-    
+
     const componentId = addComponent('TEXT', x, y, 200, 100, {
       text: 'Click to edit text...'
     });
-    
+
     if (componentId) {
       setSelectedComponentId(componentId);
       console.log(`✨ Created text component: ${componentId}`);
@@ -74,7 +74,7 @@ export function PageEditor() {
 
     try {
       console.log(`📸 Uploading image: ${file.name}`);
-      
+
       // Upload the image
       const component = await componentsApi.uploadImage(file, {
         pageId,
@@ -115,7 +115,7 @@ export function PageEditor() {
   const handleComponentSelect = (componentId: string) => {
     setSelectedComponentId(componentId);
     // Bring selected component to front for better visibility
-    bringToFront(componentId);
+    // bringToFront(componentId);
   };
 
   // Debug: Log components when they change
@@ -137,7 +137,7 @@ export function PageEditor() {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link 
+            <Link
               to={`/notebook/${page.section.notebookId}`}
               className="text-gray-500 hover:text-gray-700"
             >
@@ -150,7 +150,7 @@ export function PageEditor() {
               </p>
             </div>
           </div>
-          
+
           {/* Connection Status */}
           <div className="flex items-center space-x-2">
             {isConnected ? (
@@ -192,7 +192,7 @@ export function PageEditor() {
             <Circle className="w-4 h-4 mr-2" />
             Add Drawing
           </button>
-          
+
           {/* Debug info */}
           <div className="ml-auto text-sm text-gray-500">
             Components: {components.size} | Page: {pageId}
@@ -202,8 +202,8 @@ export function PageEditor() {
 
       {/* Canvas */}
       <div className="flex-1 overflow-auto">
-        <div 
-          ref={canvasRef} 
+        <div
+          ref={canvasRef}
           className="relative min-h-full bg-white"
           onClick={handleCanvasClick}
           style={{ minWidth: '1200px', minHeight: '800px' }}
@@ -211,25 +211,25 @@ export function PageEditor() {
           {Array.from(components.values())
             .sort((a, b) => a.zIndex - b.zIndex)
             .map((component) => (
-            <PageComponent
-              key={component.id}
-              component={component}
-              isSelected={selectedComponentId === component.id}
-              onSelect={() => handleComponentSelect(component.id)}
-              onUpdate={(updates) => handleComponentUpdate(component.id, updates)}
-              onDelete={() => handleComponentDelete(component.id)}
-              getComponentText={() => getComponentText(component.id)}
-            />
-          ))}
+              <PageComponent
+                key={component.id}
+                component={component}
+                isSelected={selectedComponentId === component.id}
+                onSelect={() => handleComponentSelect(component.id)}
+                onUpdate={(updates) => handleComponentUpdate(component.id, updates)}
+                onDelete={() => handleComponentDelete(component.id)}
+                getComponentText={() => getComponentText(component.id)}
+              />
+            ))}
         </div>
       </div>
 
-      <input 
+      <input
         ref={fileInputRef}
-        type="file" 
-        accept="image/*" 
+        type="file"
+        accept="image/*"
         onChange={handleImageUpload}
-        className="hidden" 
+        className="hidden"
       />
     </div>
   );

@@ -91,11 +91,11 @@ export function PageComponent({
   const handleDragStop = (e: any, data: { x: number; y: number }) => {
     console.log("🖱️ Drag stop on component:", component.id, { x: data.x, y: data.y });
     setIsDragging(false);
-    
+
     // Final update to ensure exact position is set (not throttled)
-    if (!lastUpdateRef.current || 
-        lastUpdateRef.current.x !== data.x || 
-        lastUpdateRef.current.y !== data.y) {
+    if (!lastUpdateRef.current ||
+      lastUpdateRef.current.x !== data.x ||
+      lastUpdateRef.current.y !== data.y) {
       console.log("🎯 Final position update:", { componentId: component.id, x: data.x, y: data.y });
       onUpdate({ x: data.x, y: data.y });
     }
@@ -116,6 +116,7 @@ export function PageComponent({
     setIsEditing(false);
     const yText = getComponentText();
     if (yText) {
+      console.log("🔄 Text submit:", { componentId: component.id, text: editingText });
       yText.delete(0, yText.length);
       yText.insert(0, editingText);
     } else {
