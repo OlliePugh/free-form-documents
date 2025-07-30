@@ -20,7 +20,7 @@ interface OneNoteLayoutProps {
   currentPage?: Page | null;
   onCreateNotebook?: () => void;
   onCreateSection?: () => void;
-  onCreatePage?: () => void;
+  onCreatePage?: (sectionId: string) => void;
 }
 
 export function OneNoteLayout({
@@ -139,7 +139,7 @@ export function OneNoteLayout({
                                 <div className="flex items-center justify-between px-2 py-1 text-sm text-gray-600 hover:bg-gray-50 rounded">
                                   <span className="truncate">{section.title}</span>
                                   <button
-                                    onClick={() => onCreatePage?.()}
+                                    onClick={() => onCreatePage?.(section.id)}
                                     className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-200"
                                     title="Add page"
                                   >

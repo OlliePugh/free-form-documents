@@ -21,6 +21,7 @@ function AppContent() {
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [showCreateSectionModal, setShowCreateSectionModal] = useState(false);
   const [showCreatePageModal, setShowCreatePageModal] = useState(false);
+  const [selectedSectionForPage, setSelectedSectionForPage] = useState<string | null>(null);
   const [newNotebookTitle, setNewNotebookTitle] = useState('');
   const [newNotebookColor, setNewNotebookColor] = useState('#4F46E5');
   const [newSectionTitle, setNewSectionTitle] = useState('');
@@ -68,15 +69,17 @@ function AppContent() {
 
   const handleCreatePage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPageTitle.trim() || !selectedSectionId) return;
+    const targetSectionId = selectedSectionForPage || selectedSectionId;
+    if (!newPageTitle.trim() || !targetSectionId) return;
 
     try {
       await pagesApi.create({
         title: newPageTitle,
-        sectionId: selectedSectionId
+        sectionId: targetSectionId
       });
       setNewPageTitle('');
       setSelectedSectionId('');
+      setSelectedSectionForPage(null);
       setShowCreatePageModal(false);
       refreshCurrentNotebook();
     } catch (error) {
@@ -103,7 +106,10 @@ function AppContent() {
         currentPage={currentPage}
         onCreateNotebook={() => setShowCreateNotebookModal(true)}
         onCreateSection={() => setShowCreateSectionModal(true)}
-        onCreatePage={() => setShowCreatePageModal(true)}
+        onCreatePage={(sectionId) => {
+          setSelectedSectionForPage(sectionId);
+          setShowCreatePageModal(true);
+        }}
       >
         <Routes>
           <Route path="/" element={<NotebookList />} />
@@ -233,7 +239,10 @@ function AppContent() {
       {showCreatePageModal && currentNotebook && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowCreatePageModal(false)} />
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => {
+              setShowCreatePageModal(false);
+              setSelectedSectionForPage(null);
+            }} />
 
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <form onSubmit={handleCreatePage}>
@@ -248,8 +257,14 @@ function AppContent() {
                     </label>
                     <select
                       id="section"
-                      value={selectedSectionId}
-                      onChange={(e) => setSelectedSectionId(e.target.value)}
+                      value={selectedSectionForPage || selectedSectionId}
+                      onChange={(e) => {
+                        if (selectedSectionForPage) {
+                          setSelectedSectionForPage(e.target.value);
+                        } else {
+                          setSelectedSectionId(e.target.value);
+                        }
+                      }}
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     >
                       <option value="">Select a section</option>
@@ -284,7 +299,10 @@ function AppContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowCreatePageModal(false)}
+                    onClick={() => {
+                      setShowCreatePageModal(false);
+                      setSelectedSectionForPage(null);
+                    }}
                     className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Cancel
