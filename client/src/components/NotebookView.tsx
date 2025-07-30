@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, FileText, FolderOpen } from 'lucide-react';
+import { Plus, FileText, FolderOpen } from 'lucide-react';
 import { notebooksApi, sectionsApi, pagesApi } from '../api/client';
-import { Notebook, Section, Page } from '../types';
+import { Notebook } from '../types';
 
 export function NotebookView() {
   const { notebookId } = useParams<{ notebookId: string }>();
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showCreateSectionModal, setShowCreateSectionModal] = useState(false);
-  const [showCreatePageModal, setShowCreatePageModal] = useState(false);
-  const [selectedSectionId, setSelectedSectionId] = useState<string>('');
-  const [newSectionTitle, setNewSectionTitle] = useState('');
-  const [newPageTitle, setNewPageTitle] = useState('');
 
   useEffect(() => {
     if (notebookId) {
@@ -28,41 +23,6 @@ export function NotebookView() {
       console.error('Failed to load notebook:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCreateSection = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSectionTitle.trim() || !notebookId) return;
-
-    try {
-      await sectionsApi.create({
-        title: newSectionTitle,
-        notebookId
-      });
-      setNewSectionTitle('');
-      setShowCreateSectionModal(false);
-      loadNotebook();
-    } catch (error) {
-      console.error('Failed to create section:', error);
-    }
-  };
-
-  const handleCreatePage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPageTitle.trim() || !selectedSectionId) return;
-
-    try {
-      await pagesApi.create({
-        title: newPageTitle,
-        sectionId: selectedSectionId
-      });
-      setNewPageTitle('');
-      setSelectedSectionId('');
-      setShowCreatePageModal(false);
-      loadNotebook();
-    } catch (error) {
-      console.error('Failed to create page:', error);
     }
   };
 
@@ -88,211 +48,96 @@ export function NotebookView() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/"
-              className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Back
-            </Link>
-            <div className="flex items-center space-x-3">
-              <div 
-                className="h-6 w-6 rounded"
-                style={{ backgroundColor: notebook.color }}
-              />
-              <h1 className="text-2xl font-semibold text-gray-900">{notebook.title}</h1>
-            </div>
+    <div className="h-full overflow-auto bg-gray-50">
+      <div className="max-w-6xl mx-auto p-8">
+        {/* Notebook Header */}
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <div
+              className="w-8 h-8 rounded mr-4"
+              style={{ backgroundColor: notebook.color }}
+            />
+            <h1 className="text-3xl font-bold text-gray-900">{notebook.title}</h1>
           </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => setShowCreateSectionModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Section
-            </button>
-            <button
-              onClick={() => setShowCreatePageModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Page
-            </button>
-          </div>
+          <p className="text-gray-600">
+            {notebook.sections?.length || 0} sections • Created {new Date(notebook.createdAt).toLocaleDateString()}
+          </p>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 p-6">
+        {/* Sections Grid */}
         {notebook.sections?.length === 0 ? (
-          <div className="text-center py-12">
-            <FolderOpen className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No sections</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by creating a new section.</p>
+          <div className="text-center py-16">
+            <FolderOpen className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No sections yet</h3>
+            <p className="text-gray-500 mb-6">Get started by creating your first section.</p>
+            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Section
+            </button>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="grid grid-cols-1 gap-8">
             {notebook.sections?.map((section) => (
-              <div key={section.id} className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">{section.title}</h2>
+              <div key={section.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900">{section.title}</h2>
+                    <div className="text-sm text-gray-500">
+                      {section.pages?.length || 0} pages
+                    </div>
+                  </div>
+                </div>
                 
-                {section.pages?.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="mx-auto h-8 w-8 text-gray-400" />
-                    <p className="mt-2 text-sm">No pages in this section</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {section.pages?.map((page) => (
-                      <Link
-                        key={page.id}
-                        to={`/page/${page.id}`}
-                        className="group block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <FileText className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {page.title}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {page.components?.length || 0} components
-                            </p>
+                <div className="p-6">
+                  {section.pages?.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FileText className="mx-auto h-10 w-10 text-gray-400 mb-3" />
+                      <p className="text-gray-500 mb-4">No pages in this section</p>
+                      <button className="inline-flex items-center px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Page
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {section.pages?.map((page) => (
+                        <Link
+                          key={page.id}
+                          to={`/page/${page.id}`}
+                          className="group block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <FileText className="w-5 h-5 text-gray-400 group-hover:text-blue-500 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700">
+                                {page.title}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {page.components?.length || 0} components
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {new Date(page.updatedAt).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
+                        </Link>
+                      ))}
+                      
+                      {/* Add Page Button */}
+                      <button className="group block p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 text-center">
+                        <div className="flex flex-col items-center justify-center h-full">
+                          <Plus className="w-6 h-6 text-gray-400 group-hover:text-blue-500 mb-2" />
+                          <span className="text-sm text-gray-500 group-hover:text-blue-600">Add Page</span>
                         </div>
-                        <div className="mt-2 text-xs text-gray-500">
-                          {new Date(page.updatedAt).toLocaleDateString()}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* Create Section Modal */}
-      {showCreateSectionModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowCreateSectionModal(false)} />
-
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <form onSubmit={handleCreateSection}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                    Create New Section
-                  </h3>
-                  
-                  <div className="mb-4">
-                    <label htmlFor="sectionTitle" className="block text-sm font-medium text-gray-700 mb-2">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      id="sectionTitle"
-                      value={newSectionTitle}
-                      onChange={(e) => setNewSectionTitle(e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter section title"
-                      autoFocus
-                    />
-                  </div>
-                </div>
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Create
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateSectionModal(false)}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Page Modal */}
-      {showCreatePageModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowCreatePageModal(false)} />
-
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <form onSubmit={handleCreatePage}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                    Create New Page
-                  </h3>
-                  
-                  <div className="mb-4">
-                    <label htmlFor="section" className="block text-sm font-medium text-gray-700 mb-2">
-                      Section
-                    </label>
-                    <select
-                      id="section"
-                      value={selectedSectionId}
-                      onChange={(e) => setSelectedSectionId(e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    >
-                      <option value="">Select a section</option>
-                      {notebook.sections?.map((section) => (
-                        <option key={section.id} value={section.id}>
-                          {section.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-4">
-                    <label htmlFor="pageTitle" className="block text-sm font-medium text-gray-700 mb-2">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      id="pageTitle"
-                      value={newPageTitle}
-                      onChange={(e) => setNewPageTitle(e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Enter page title"
-                    />
-                  </div>
-                </div>
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Create
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreatePageModal(false)}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
