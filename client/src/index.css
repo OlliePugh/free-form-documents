@@ -117,6 +117,9 @@ body {
   width: 100%;
   margin: 1em 0;
   overflow: hidden;
+  border: 2px solid var(--onenote-border);
+  border-radius: 4px;
+  background-color: white;
 }
 
 .ProseMirror table td, .ProseMirror table th {
@@ -126,12 +129,15 @@ body {
   vertical-align: top;
   box-sizing: border-box;
   position: relative;
+  background-color: white;
+  word-wrap: break-word;
 }
 
 .ProseMirror table th {
   font-weight: 600;
   text-align: left;
-  background-color: #f8f9fa;
+  background-color: var(--onenote-section-bg);
+  color: var(--onenote-text);
 }
 
 .ProseMirror table .selectedCell:after {
@@ -139,8 +145,41 @@ body {
   position: absolute;
   content: "";
   left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(200, 200, 255, 0.4);
+  background: rgba(0, 120, 215, 0.3);
   pointer-events: none;
+  border: 2px solid var(--onenote-primary);
+}
+
+/* Table resizing handles */
+.ProseMirror table .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--onenote-primary);
+  cursor: col-resize;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ProseMirror table:hover .column-resize-handle {
+  opacity: 0.3;
+}
+
+.ProseMirror table .column-resize-handle:hover {
+  opacity: 1;
+}
+
+/* Enhanced table cell hover */
+.ProseMirror table td:hover,
+.ProseMirror table th:hover {
+  background-color: var(--onenote-hover-bg);
+}
+
+.ProseMirror table td.selectedCell:hover,
+.ProseMirror table th.selectedCell:hover {
+  background-color: rgba(0, 120, 215, 0.1);
 }
 
 /* Component styling */

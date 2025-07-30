@@ -6,6 +6,7 @@ import { NotebookView } from './components/NotebookView';
 import { PageEditor } from './components/PageEditor';
 import { useAppData } from './hooks/useAppData';
 import { notebooksApi, sectionsApi, pagesApi } from './api/client';
+import { EditorProvider } from './contexts/EditorContext';
 
 function AppContent() {
   const { 
@@ -300,9 +301,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <EditorProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </EditorProvider>
   );
 }
 

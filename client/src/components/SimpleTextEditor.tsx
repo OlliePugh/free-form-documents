@@ -15,6 +15,7 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { useEffect, useState } from 'react';
 import * as Y from 'yjs';
 import { useDebounce } from '../hooks/useDebounce';
+import { useEditorContext } from '../contexts/EditorContext';
 
 interface SimpleTextEditorProps {
   yText: Y.Text | null;
@@ -35,6 +36,8 @@ export function SimpleTextEditor({
   onFocus,
   onBlur
 }: SimpleTextEditorProps) {
+  const { setActiveEditor } = useEditorContext();
+  
   // If no yText is provided, show a simple loading state
   if (!yText) {
     return (
@@ -135,6 +138,29 @@ export function SimpleTextEditor({
     yText.observe(handleYTextChange);
     return () => yText.unobserve(handleYTextChange);
   }, [editor, yText]);
+
+  // Register editor on focus/blur
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleFocus = () => {
+      setActiveEditor(editor);
+      onFocus?.();
+    };
+
+    const handleBlur = () => {
+      setActiveEditor(null);
+      onBlur?.();
+    };
+
+    editor.on('focus', handleFocus);
+    editor.on('blur', handleBlur);
+
+    return () => {
+      editor.off('focus', handleFocus);
+      editor.off('blur', handleBlur);
+    };
+  }, [editor, setActiveEditor, onFocus, onBlur]);
 
   if (!editor) {
     return (

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Type, Image, Circle, Wifi, WifiOff, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { Type, Image, Circle, Wifi, WifiOff, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Table, Plus, Minus, Merge, Split, Trash2 } from 'lucide-react';
+import { useEditorContext } from '../contexts/EditorContext';
 import { useCollaboration } from '../hooks/useCollaboration';
 import { PageComponent } from './PageComponent';
 import { pagesApi, componentsApi } from '../api/client';
@@ -12,6 +13,28 @@ export function PageEditor() {
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { 
+    activeEditor, 
+    toggleBold, 
+    toggleItalic, 
+    toggleUnderline, 
+    toggleBulletList, 
+    toggleOrderedList, 
+    setTextAlign,
+    insertTable,
+    addColumnBefore,
+    addColumnAfter,
+    deleteColumn,
+    addRowBefore,
+    addRowAfter,
+    deleteRow,
+    mergeCells,
+    splitCell,
+    deleteTable,
+    isActive,
+    canExecute
+  } = useEditorContext();
 
   const {
     components,
@@ -161,34 +184,153 @@ export function PageEditor() {
 
           {/* Formatting Tools */}
           <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
-            <div className="text-sm text-gray-500 mr-3">Format selected text:</div>
-            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Bold (Ctrl+B)">
+            <div className="text-sm text-gray-500 mr-3">
+              {activeEditor ? 'Format selected text:' : 'Click in text to format:'}
+            </div>
+            <button 
+              className={`p-2 rounded hover:bg-gray-100 disabled:opacity-50 ${isActive('bold') ? 'bg-blue-100 text-blue-600' : ''}`}
+              disabled={!activeEditor} 
+              onClick={toggleBold}
+              title="Bold (Ctrl+B)"
+            >
               <Bold className="w-4 h-4" />
             </button>
-            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Italic (Ctrl+I)">
+            <button 
+              className={`p-2 rounded hover:bg-gray-100 disabled:opacity-50 ${isActive('italic') ? 'bg-blue-100 text-blue-600' : ''}`}
+              disabled={!activeEditor} 
+              onClick={toggleItalic}
+              title="Italic (Ctrl+I)"
+            >
               <Italic className="w-4 h-4" />
             </button>
-            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Underline (Ctrl+U)">
+            <button 
+              className={`p-2 rounded hover:bg-gray-100 disabled:opacity-50 ${isActive('underline') ? 'bg-blue-100 text-blue-600' : ''}`}
+              disabled={!activeEditor} 
+              onClick={toggleUnderline}
+              title="Underline (Ctrl+U)"
+            >
               <Underline className="w-4 h-4" />
             </button>
             <div className="w-px h-6 bg-gray-300 mx-1" />
-            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Bullet List">
+            <button 
+              className={`p-2 rounded hover:bg-gray-100 disabled:opacity-50 ${isActive('bulletList') ? 'bg-blue-100 text-blue-600' : ''}`}
+              disabled={!activeEditor} 
+              onClick={toggleBulletList}
+              title="Bullet List"
+            >
               <List className="w-4 h-4" />
             </button>
-            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Numbered List">
+            <button 
+              className={`p-2 rounded hover:bg-gray-100 disabled:opacity-50 ${isActive('orderedList') ? 'bg-blue-100 text-blue-600' : ''}`}
+              disabled={!activeEditor} 
+              onClick={toggleOrderedList}
+              title="Numbered List"
+            >
               <ListOrdered className="w-4 h-4" />
             </button>
             <div className="w-px h-6 bg-gray-300 mx-1" />
-            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Align Left">
+            <button 
+              className={`p-2 rounded hover:bg-gray-100 disabled:opacity-50 ${isActive('textAlign', { textAlign: 'left' }) ? 'bg-blue-100 text-blue-600' : ''}`}
+              disabled={!activeEditor} 
+              onClick={() => setTextAlign('left')}
+              title="Align Left"
+            >
               <AlignLeft className="w-4 h-4" />
             </button>
-            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Align Center">
+            <button 
+              className={`p-2 rounded hover:bg-gray-100 disabled:opacity-50 ${isActive('textAlign', { textAlign: 'center' }) ? 'bg-blue-100 text-blue-600' : ''}`}
+              disabled={!activeEditor} 
+              onClick={() => setTextAlign('center')}
+              title="Align Center"
+            >
               <AlignCenter className="w-4 h-4" />
             </button>
-            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Align Right">
+            <button 
+              className={`p-2 rounded hover:bg-gray-100 disabled:opacity-50 ${isActive('textAlign', { textAlign: 'right' }) ? 'bg-blue-100 text-blue-600' : ''}`}
+              disabled={!activeEditor} 
+              onClick={() => setTextAlign('right')}
+              title="Align Right"
+            >
               <AlignRight className="w-4 h-4" />
             </button>
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+            <button 
+              className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+              disabled={!activeEditor} 
+              onClick={insertTable}
+              title="Insert Table (3x3)"
+            >
+              <Table className="w-4 h-4" />
+            </button>
           </div>
+
+          {/* Table Tools - Show when cursor is in a table */}
+          {activeEditor && isActive('table') && (
+            <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
+              <div className="text-sm text-gray-500 mr-3">Table:</div>
+              <button 
+                className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                disabled={!canExecute('addColumnBefore')} 
+                onClick={addColumnBefore}
+                title="Add Column Before"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-xs ml-1">Col</span>
+              </button>
+              <button 
+                className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                disabled={!canExecute('addRowBefore')} 
+                onClick={addRowBefore}
+                title="Add Row Before"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-xs ml-1">Row</span>
+              </button>
+              <button 
+                className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                disabled={!canExecute('deleteColumn')} 
+                onClick={deleteColumn}
+                title="Delete Column"
+              >
+                <Minus className="w-4 h-4" />
+                <span className="text-xs ml-1">Col</span>
+              </button>
+              <button 
+                className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                disabled={!canExecute('deleteRow')} 
+                onClick={deleteRow}
+                title="Delete Row"
+              >
+                <Minus className="w-4 h-4" />
+                <span className="text-xs ml-1">Row</span>
+              </button>
+              <div className="w-px h-6 bg-gray-300 mx-1" />
+              <button 
+                className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                disabled={!canExecute('mergeCells')} 
+                onClick={mergeCells}
+                title="Merge Cells"
+              >
+                <Merge className="w-4 h-4" />
+              </button>
+              <button 
+                className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                disabled={!canExecute('splitCell')} 
+                onClick={splitCell}
+                title="Split Cell"
+              >
+                <Split className="w-4 h-4" />
+              </button>
+              <button 
+                className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                disabled={!canExecute('deleteTable')} 
+                onClick={deleteTable}
+                title="Delete Table"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Connection Status & Info */}
           <div className="flex items-center space-x-4">
