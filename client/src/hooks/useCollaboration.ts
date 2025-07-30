@@ -470,8 +470,13 @@ export function useCollaboration(pageId: string) {
   };
 
   const getComponentText = (componentId: string): Y.Text | null => {
-    const component = components.get(componentId);
-    return component?.text || null;
+    if (!yComponentsRef.current) return null;
+    
+    const yComponent = yComponentsRef.current.get(componentId);
+    if (!yComponent || !(yComponent instanceof Y.Map)) return null;
+    
+    const yText = yComponent.get('text');
+    return yText instanceof Y.Text ? yText : null;
   };
 
   // Helper function to bring component to front

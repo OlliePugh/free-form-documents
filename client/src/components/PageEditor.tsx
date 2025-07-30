@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Type, Image, Circle, Wifi, WifiOff } from 'lucide-react';
+import { Type, Image, Circle, Wifi, WifiOff, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { useCollaboration } from '../hooks/useCollaboration';
 import { PageComponent } from './PageComponent';
 import { pagesApi, componentsApi } from '../api/client';
@@ -131,30 +131,62 @@ export function PageEditor() {
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      {/* Quick Actions Toolbar */}
+      {/* Global Toolbar */}
       <div className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          {/* Insert Tools */}
+          <div className="flex items-center space-x-1">
             <button
               onClick={handleAddTextComponent}
-              className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               <Type className="w-4 h-4 mr-2" />
               Add Text
             </button>
             <button
               onClick={handleAddImageComponent}
-              className="flex items-center px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              className="flex items-center px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
             >
               <Image className="w-4 h-4 mr-2" />
               Add Image
             </button>
             <button
               onClick={() => addComponent('DRAWING', 200, 200, 150, 150)}
-              className="flex items-center px-4 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              className="flex items-center px-3 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
             >
               <Circle className="w-4 h-4 mr-2" />
               Add Drawing
+            </button>
+          </div>
+
+          {/* Formatting Tools */}
+          <div className="flex items-center space-x-1 border-l border-gray-300 pl-4">
+            <div className="text-sm text-gray-500 mr-3">Format selected text:</div>
+            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Bold (Ctrl+B)">
+              <Bold className="w-4 h-4" />
+            </button>
+            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Italic (Ctrl+I)">
+              <Italic className="w-4 h-4" />
+            </button>
+            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Underline (Ctrl+U)">
+              <Underline className="w-4 h-4" />
+            </button>
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Bullet List">
+              <List className="w-4 h-4" />
+            </button>
+            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Numbered List">
+              <ListOrdered className="w-4 h-4" />
+            </button>
+            <div className="w-px h-6 bg-gray-300 mx-1" />
+            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Align Left">
+              <AlignLeft className="w-4 h-4" />
+            </button>
+            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Align Center">
+              <AlignCenter className="w-4 h-4" />
+            </button>
+            <button className="p-2 rounded hover:bg-gray-100 disabled:opacity-50" disabled title="Align Right">
+              <AlignRight className="w-4 h-4" />
             </button>
           </div>
 

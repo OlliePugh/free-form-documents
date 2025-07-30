@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import * as Y from 'yjs';
 import { YjsComponent } from '../hooks/useCollaboration';
 import { componentsApi } from '../api/client';
-import { RichTextEditor } from './RichTextEditor';
+import { SimpleTextEditor } from './SimpleTextEditor';
 import 'react-resizable/css/styles.css';
 
 interface PageComponentProps {
@@ -105,8 +105,9 @@ export function PageComponent({
       case 'TEXT':
         const yText = getComponentText();
         return (
-          <RichTextEditor
+          <SimpleTextEditor
             yText={yText}
+            componentId={component.id}
             editable={true}
             placeholder="Type your notes here..."
             className="w-full h-full"
