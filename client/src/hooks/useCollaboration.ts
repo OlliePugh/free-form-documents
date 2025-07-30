@@ -332,8 +332,9 @@ export function useCollaboration(pageId: string) {
     yComponent.set("height", height);
     yComponent.set("zIndex", zIndex);
 
-    if (options.text) {
-      const yText = new Y.Text(options.text);
+    // Always create Y.Text for TEXT components
+    if (type === "TEXT") {
+      const yText = new Y.Text(options.text || "");
       yComponent.set("text", yText);
     }
 

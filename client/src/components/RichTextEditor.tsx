@@ -6,7 +6,6 @@ import { FontFamily } from '@tiptap/extension-font-family';
 import { Underline } from '@tiptap/extension-underline';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { Collaboration } from '@tiptap/extension-collaboration';
-import { CollaborationCursor } from '@tiptap/extension-collaboration-cursor';
 import { Image } from '@tiptap/extension-image';
 import { Link } from '@tiptap/extension-link';
 import { Table } from '@tiptap/extension-table';
@@ -67,6 +66,14 @@ export function RichTextEditor({
   onFocus,
   onBlur
 }: RichTextEditorProps) {
+  // If no yText is provided, show a simple loading state
+  if (!yText) {
+    return (
+      <div className={`rich-text-editor ${className} flex items-center justify-center h-40 bg-gray-50 border rounded`}>
+        <div className="text-gray-500">Connecting to collaboration server...</div>
+      </div>
+    );
+  }
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showFontPicker, setShowFontPicker] = useState(false);
   const colorPickerRef = useRef<HTMLDivElement>(null);
@@ -103,12 +110,9 @@ export function RichTextEditor({
       TableRow,
       TableHeader,
       TableCell,
-      ...(yText ? [
+      ...(yText && yText.doc ? [
         Collaboration.configure({
-          document: yText.doc!,
-        }),
-        CollaborationCursor.configure({
-          provider: null, // We'll handle this through our existing collaboration system
+          document: yText.doc,
         }),
       ] : []),
     ],
@@ -120,7 +124,7 @@ export function RichTextEditor({
     onBlur: () => {
       onBlur?.();
     },
-  });
+  }, [yText, editable]); // Add dependencies to recreate editor when yText changes
 
   // Sync with Y.Text changes
   useEffect(() => {
@@ -181,7 +185,11 @@ export function RichTextEditor({
   }, []);
 
   if (!editor) {
-    return null;
+    return (
+      <div className={`rich-text-editor ${className} flex items-center justify-center h-40`}>
+        <div className="text-gray-500">Loading editor...</div>
+      </div>
+    );
   }
 
   const addImage = () => {
