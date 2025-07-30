@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Type, Image, Circle, Wifi, WifiOff } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Type, Image, Circle, Wifi, WifiOff } from 'lucide-react';
 import { useCollaboration } from '../hooks/useCollaboration';
 import { PageComponent } from './PageComponent';
 import { pagesApi, componentsApi } from '../api/client';
@@ -54,8 +54,8 @@ export function PageEditor() {
     const x = 100;
     const y = 100;
 
-    const componentId = addComponent('TEXT', x, y, 200, 100, {
-      text: 'Click to edit text...'
+    const componentId = addComponent('TEXT', x, y, 400, 200, {
+      text: 'Start typing your notes here...'
     });
 
     if (componentId) {
@@ -114,8 +114,6 @@ export function PageEditor() {
 
   const handleComponentSelect = (componentId: string) => {
     setSelectedComponentId(componentId);
-    // Bring selected component to front for better visibility
-    // bringToFront(componentId);
   };
 
   // Debug: Log components when they change
@@ -132,82 +130,77 @@ export function PageEditor() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-100">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="h-full flex flex-col bg-gray-50">
+      {/* Quick Actions Toolbar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link
-              to={`/notebook/${page.section.notebookId}`}
-              className="text-gray-500 hover:text-gray-700"
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleAddTextComponent}
+              className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">{page.title}</h1>
-              <p className="text-sm text-gray-500">
-                {page.section.notebook.title} → {page.section.title}
-              </p>
+              <Type className="w-4 h-4 mr-2" />
+              Add Text
+            </button>
+            <button
+              onClick={handleAddImageComponent}
+              className="flex items-center px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              <Image className="w-4 h-4 mr-2" />
+              Add Image
+            </button>
+            <button
+              onClick={() => addComponent('DRAWING', 200, 200, 150, 150)}
+              className="flex items-center px-4 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+            >
+              <Circle className="w-4 h-4 mr-2" />
+              Add Drawing
+            </button>
+          </div>
+
+          {/* Connection Status & Info */}
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-500">
+              {components.size} components
             </div>
-          </div>
-
-          {/* Connection Status */}
-          <div className="flex items-center space-x-2">
-            {isConnected ? (
-              <div className="flex items-center text-green-600">
-                <Wifi className="w-4 h-4 mr-1" />
-                <span className="text-sm">Connected</span>
-              </div>
-            ) : (
-              <div className="flex items-center text-red-600">
-                <WifiOff className="w-4 h-4 mr-1" />
-                <span className="text-sm">Disconnected</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-2">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handleAddTextComponent}
-            className="flex items-center px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            <Type className="w-4 h-4 mr-2" />
-            Add Text
-          </button>
-          <button
-            onClick={handleAddImageComponent}
-            className="flex items-center px-3 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600"
-          >
-            <Image className="w-4 h-4 mr-2" />
-            Add Image
-          </button>
-          <button
-            onClick={() => addComponent('DRAWING', 200, 200, 150, 150)}
-            className="flex items-center px-3 py-2 text-sm bg-purple-500 text-white rounded hover:bg-purple-600"
-          >
-            <Circle className="w-4 h-4 mr-2" />
-            Add Drawing
-          </button>
-
-          {/* Debug info */}
-          <div className="ml-auto text-sm text-gray-500">
-            Components: {components.size} | Page: {pageId}
+            <div className="flex items-center space-x-2">
+              {isConnected ? (
+                <div className="flex items-center text-green-600">
+                  <Wifi className="w-4 h-4 mr-1" />
+                  <span className="text-sm">Connected</span>
+                </div>
+              ) : (
+                <div className="flex items-center text-red-600">
+                  <WifiOff className="w-4 h-4 mr-1" />
+                  <span className="text-sm">Disconnected</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto bg-white">
         <div
           ref={canvasRef}
-          className="relative min-h-full bg-white"
+          className="relative min-h-full"
           onClick={handleCanvasClick}
           style={{ minWidth: '1200px', minHeight: '800px' }}
         >
+          {/* Background grid (optional, like OneNote) */}
+          <div className="absolute inset-0 opacity-30 pointer-events-none">
+            <svg width="100%" height="100%">
+              <defs>
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+          </div>
+
+          {/* Components */}
           {Array.from(components.values())
             .sort((a, b) => a.zIndex - b.zIndex)
             .map((component) => (
@@ -221,6 +214,16 @@ export function PageEditor() {
                 getComponentText={() => getComponentText(component.id)}
               />
             ))}
+
+          {/* Welcome message when no components */}
+          {components.size === 0 && (
+            <div className="absolute top-20 left-20 text-gray-400 pointer-events-none">
+              <div className="text-lg font-medium mb-2">Welcome to your new page!</div>
+              <div className="text-sm">
+                Click "Add Text" to start typing your notes, or add images and drawings.
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import * as Y from 'yjs';
 import { YjsComponent } from '../hooks/useCollaboration';
 import { componentsApi } from '../api/client';
+import { RichTextEditor } from './RichTextEditor';
 import 'react-resizable/css/styles.css';
 
 interface PageComponentProps {
@@ -37,9 +38,7 @@ export function PageComponent({
   getComponentText
 }: PageComponentProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editingText, setEditingText] = useState('');
   const [isDragging, setIsDragging] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const componentRef = useRef<HTMLDivElement>(null);
   const lastUpdateRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -52,30 +51,6 @@ export function PageComponent({
     }, 50),
     [component.id, onUpdate]
   );
-
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.select();
-    }
-  }, [isEditing]);
-
-  useEffect(() => {
-    // Sync with Y.Text content
-    const yText = getComponentText();
-    if (yText) {
-      setEditingText(yText.toString());
-
-      const handleTextChange = () => {
-        setEditingText(yText.toString());
-      };
-
-      yText.observe(handleTextChange);
-      return () => yText.unobserve(handleTextChange);
-    } else if (component.type === 'TEXT') {
-      setEditingText('Click to edit text');
-    }
-  }, [component.id, getComponentText]);
 
   const handleDragStart = () => {
     console.log("🖱️ Drag start on component:", component.id);
@@ -106,38 +81,6 @@ export function PageComponent({
     onUpdate({ width: data.size.width, height: data.size.height });
   };
 
-  const handleTextDoubleClick = () => {
-    if (component.type === 'TEXT') {
-      setIsEditing(true);
-    }
-  };
-
-  const handleTextSubmit = () => {
-    setIsEditing(false);
-    const yText = getComponentText();
-    if (yText) {
-      console.log("🔄 Text submit:", { componentId: component.id, text: editingText });
-      yText.delete(0, yText.length);
-      yText.insert(0, editingText);
-    } else {
-      onUpdate({ text: editingText });
-    }
-  };
-
-  const handleTextKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleTextSubmit();
-    } else if (e.key === 'Escape') {
-      setIsEditing(false);
-      // Reset to original text
-      const yText = getComponentText();
-      if (yText) {
-        setEditingText(yText.toString());
-      }
-    }
-  };
-
   const handleClick = (e: React.MouseEvent) => {
     console.log("🖱️ Click event on component:", component.id);
     e.stopPropagation();
@@ -149,29 +92,27 @@ export function PageComponent({
     onDelete();
   };
 
+  const handleTextFocus = () => {
+    setIsEditing(true);
+  };
+
+  const handleTextBlur = () => {
+    setIsEditing(false);
+  };
+
   const renderContent = () => {
     switch (component.type) {
       case 'TEXT':
-        if (isEditing) {
-          return (
-            <textarea
-              ref={textareaRef}
-              value={editingText}
-              onChange={(e) => setEditingText(e.target.value)}
-              onBlur={handleTextSubmit}
-              onKeyDown={handleTextKeyDown}
-              className="w-full h-full resize-none border-none outline-none bg-transparent p-2 text-sm text-gray-900"
-              style={{ minHeight: '100%' }}
-            />
-          );
-        }
+        const yText = getComponentText();
         return (
-          <div
-            className="w-full h-full p-2 text-sm whitespace-pre-wrap cursor-text text-gray-900"
-            onDoubleClick={handleTextDoubleClick}
-          >
-            {editingText || 'Click to edit text'}
-          </div>
+          <RichTextEditor
+            yText={yText}
+            editable={true}
+            placeholder="Type your notes here..."
+            className="w-full h-full"
+            onFocus={handleTextFocus}
+            onBlur={handleTextBlur}
+          />
         );
 
       case 'IMAGE':
@@ -223,28 +164,30 @@ export function PageComponent({
           width={component.width}
           height={component.height}
           onResize={handleResize}
-          minConstraints={[50, 30]}
+          minConstraints={[200, 150]} // Larger minimum size for rich text editor
           resizeHandles={['se']}
         >
-          <div className="w-full h-full bg-white border border-gray-200 rounded shadow-sm relative">
-            {/* Drag handle - top border area */}
-            <div
-              className="drag-handle absolute top-0 left-0 right-0 h-3 cursor-move bg-blue-200 opacity-50 z-20"
-              onClick={() => console.log("🖱️ Drag handle clicked")}
-            />
+          <div className={`w-full h-full ${component.type === 'TEXT' ? 'bg-white' : 'bg-white'} border-2 ${isSelected ? 'border-blue-400' : 'border-gray-200'} rounded-lg shadow-sm relative overflow-hidden`}>
+            {/* Drag handle - only show when not editing text */}
+            {!isEditing && (
+              <div
+                className="drag-handle absolute top-0 left-0 right-0 h-3 cursor-move bg-blue-200 opacity-0 hover:opacity-75 z-20 transition-opacity"
+                onClick={() => console.log("🖱️ Drag handle clicked")}
+              />
+            )}
 
-            {/* Delete button */}
+            {/* Delete button - only show when selected and not editing */}
             {isSelected && !isEditing && (
               <button
                 onClick={handleDeleteClick}
-                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 z-30"
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 z-30 shadow-lg"
               >
                 <X className="w-3 h-3" />
               </button>
             )}
 
             {/* Content */}
-            <div className="w-full h-full relative pointer-events-auto">
+            <div className="w-full h-full relative">
               {renderContent()}
             </div>
           </div>
