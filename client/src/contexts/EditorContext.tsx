@@ -143,7 +143,30 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const canExecute = useCallback((name: string, attributes?: Record<string, any>) => {
     if (!activeEditor) return false;
-    return activeEditor.can().chain().focus()[name as keyof typeof activeEditor.can().chain().focus()]?.(attributes).run() ?? false;
+    
+    // Handle specific table commands
+    switch (name) {
+      case 'addColumnBefore':
+        return activeEditor.can().addColumnBefore();
+      case 'addColumnAfter':
+        return activeEditor.can().addColumnAfter();
+      case 'deleteColumn':
+        return activeEditor.can().deleteColumn();
+      case 'addRowBefore':
+        return activeEditor.can().addRowBefore();
+      case 'addRowAfter':
+        return activeEditor.can().addRowAfter();
+      case 'deleteRow':
+        return activeEditor.can().deleteRow();
+      case 'mergeCells':
+        return activeEditor.can().mergeCells();
+      case 'splitCell':
+        return activeEditor.can().splitCell();
+      case 'deleteTable':
+        return activeEditor.can().deleteTable();
+      default:
+        return false;
+    }
   }, [activeEditor]);
 
   return (
